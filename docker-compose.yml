@@ -1,0 +1,10 @@
+version: '2'
+
+services:
+  wigo-agen-api:
+    container_name: wigo-agen-api
+    image: wigo-agen-api:0.0.0.1
+    build: .
+    ports:
+      - 1113:1113
+    restart: always
