@@ -67,6 +67,6 @@ func Parsing_Decry(data, pemisah string) (string, string, int) {
 	temp_client := s.Split(data, pemisah)
 	client_username := temp_client[0]
 	client_company := temp_client[1]
-	client_rule, _ := strconv.Atoi(temp_client[2])
-	return client_username, client_company, client_rule
+	client_idrule, _ := strconv.Atoi(temp_client[2])
+	return client_username, client_company, client_idrule
 }

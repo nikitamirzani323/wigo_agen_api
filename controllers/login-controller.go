@@ -96,6 +96,7 @@ func Home(c *fiber.Ctx) error {
 	log.Println(client.Page)
 
 	ruleadmin := models.Get_AdminRule(idruleadmin, "ruleadmingroup", company)
+	log.Println(ruleadmin)
 	flag := models.Get_listitemsearch(ruleadmin, ",", client.Page)
 	if !flag {
 		c.Status(fiber.StatusForbidden)

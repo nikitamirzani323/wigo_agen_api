@@ -96,8 +96,8 @@ func Save_adminrule(admin, idcompany, name, rule, sData string, idrecord int) (h
 				UPDATE 
 				` + database_adminrule_local + `   
 				SET nmruleadmin=$1, ruleadmin=$2, 
-				updatecompadminrule=$3, updatedatecompadminrule=$3
-				WHERE idadmin=$5 
+				updatecompadminrule=$3, updatedatecompadminrule=$4 
+				WHERE idcompadminrule=$5 
 			`
 		flag_update, msg_update := Exec_SQL(sql_update, database_adminrule_local, "UPDATE",
 			name, rule,

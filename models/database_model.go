@@ -147,7 +147,7 @@ func Get_AdminRule(idadmin int, tipe, idcompany string) string {
 		WHERE idcompany = $1 
 		AND idcompadminrule = $2 
 	`
-	row := con.QueryRowContext(ctx, sql_select, idadmin, idcompany)
+	row := con.QueryRowContext(ctx, sql_select, idcompany, idadmin)
 	switch e := row.Scan(&ruleadmin); e {
 	case sql.ErrNoRows:
 		flag = false

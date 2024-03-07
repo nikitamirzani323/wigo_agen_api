@@ -25,8 +25,8 @@ func Adminhome(c *fiber.Ctx) error {
 
 	var obj entities.Model_admin
 	var arraobj []entities.Model_admin
-	var obj_listruleadmin entities.Responseredis_adminrule
-	var arraobj_listruleadmin []entities.Responseredis_adminrule
+	var obj_listruleadmin entities.Model_adminrule
+	var arraobj_listruleadmin []entities.Model_adminrule
 	render_page := time.Now()
 	resultredis, flag := helpers.GetRedis(Fieldadmin_home_redis + "_" + strings.ToLower(client_company))
 	jsonredis := []byte(resultredis)
@@ -47,8 +47,8 @@ func Adminhome(c *fiber.Ctx) error {
 		obj.Admin_id = int(admin_id)
 		obj.Admin_username = admin_username
 		obj.Admin_idrule = int(admin_idrule)
-		obj.Admin_rule = admin_nama
-		obj.Admin_nama = admin_rule
+		obj.Admin_rule = admin_rule
+		obj.Admin_nama = admin_nama
 		obj.Admin_joindate = admin_joindate
 		obj.Admin_lastlogin = admin_lastlogin
 		obj.Admin_lastIpaddress = admin_lastipaddres
@@ -57,9 +57,11 @@ func Adminhome(c *fiber.Ctx) error {
 		arraobj = append(arraobj, obj)
 	})
 	jsonparser.ArrayEach(listruleadmin_RD, func(value []byte, dataType jsonparser.ValueType, offset int, err error) {
-		adminrule_name, _ := jsonparser.GetString(value, "adminrule_idruleadmin")
+		adminrule_id, _ := jsonparser.GetInt(value, "adminrule_id")
+		adminrule_name, _ := jsonparser.GetString(value, "adminrule_name")
 
-		obj_listruleadmin.Adminrule_idrule = adminrule_name
+		obj_listruleadmin.Adminrule_id = int(adminrule_id)
+		obj_listruleadmin.Adminrule_name = adminrule_name
 		arraobj_listruleadmin = append(arraobj_listruleadmin, obj_listruleadmin)
 	})
 	if !flag {
