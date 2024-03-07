@@ -208,7 +208,7 @@ func Fetch_companyadminHome(idcompany string) (helpers.Responsercompanyadmin, er
 		obj.Companyadmin_id = idcompadmin_db
 		obj.Companyadmin_idrule = idcompadminrule_db
 		obj.Companyadmin_idcompany = idcompany
-		obj.Companyadmin_nmrule = _Get_adminrule(idcompadminrule_db)
+		obj.Companyadmin_nmrule = ""
 		obj.Companyadmin_username = adminusername_db
 		obj.Companyadmin_name = nameadmin_db
 		obj.Companyadmin_status = statuscompadmin_db
@@ -761,24 +761,4 @@ func Save_companyconf(admin, idcompany, status_2D30, maintenance_2D30 string,
 	res.Time = time.Since(render_page).String()
 
 	return res, nil
-}
-func _Get_adminrule(idrule int) string {
-	con := db.CreateCon()
-	ctx := context.Background()
-	rule := ""
-	sql_select := `SELECT
-			nmruleadmin    
-			FROM ` + database_companyadminrule_local + `  
-			WHERE idcompadminrule='` + strconv.Itoa(idrule) + `'       
-		`
-
-	row := con.QueryRowContext(ctx, sql_select)
-	switch e := row.Scan(&rule); e {
-	case sql.ErrNoRows:
-	case nil:
-	default:
-		helpers.ErrorCheck(e)
-	}
-
-	return rule
 }

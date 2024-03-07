@@ -48,7 +48,6 @@ func Init() *fiber.App {
 	app.Post("/api/login", controllers.CheckLogin)
 	app.Post("/api/valid", middleware.JWTProtected(), controllers.Home)
 	app.Post("/api/alladmin", middleware.JWTProtected(), controllers.Adminhome)
-	app.Post("/api/detailadmin", middleware.JWTProtected(), controllers.AdminDetail)
 	app.Post("/api/saveadmin", middleware.JWTProtected(), controllers.AdminSave)
 
 	app.Post("/api/alladminrule", middleware.JWTProtected(), controllers.Adminrulehome)

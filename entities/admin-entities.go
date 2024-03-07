@@ -1,16 +1,20 @@
 package entities
 
 type Model_admin struct {
-	Username      string `json:"admin_username"`
-	Nama          string `json:"admin_nama"`
-	Rule          string `json:"admin_rule"`
-	Joindate      string `json:"admin_joindate"`
-	Lastlogin     string `json:"admin_lastlogin"`
-	LastIpaddress string `json:"admin_lastipaddres"`
-	Status        string `json:"admin_status"`
+	Admin_id            int    `json:"admin_id"`
+	Admin_username      string `json:"admin_username"`
+	Admin_nama          string `json:"admin_nama"`
+	Admin_idrule        int    `json:"admin_idrule"`
+	Admin_rule          string `json:"admin_rule"`
+	Admin_joindate      string `json:"admin_joindate"`
+	Admin_lastlogin     string `json:"admin_lastlogin"`
+	Admin_lastIpaddress string `json:"admin_lastipaddres"`
+	Admin_status        string `json:"admin_status"`
+	Admin_status_css    string `json:"admin_status_css"`
 }
 type Model_adminrule struct {
-	Idrule string `json:"adminrule_idruleadmin"`
+	Adminrule_id   int    `json:"adminrule_id"`
+	Adminrule_name string `json:"adminrule_name"`
 }
 type Model_adminsave struct {
 	Username string `json:"admin_username"`
@@ -24,13 +28,14 @@ type Controller_admindetail struct {
 	Username string `json:"admin_username" validate:"required"`
 }
 type Controller_adminsave struct {
-	Sdata    string `json:"sdata" validate:"required"`
-	Page     string `json:"page" validate:"required"`
-	Username string `json:"admin_username" validate:"required"`
-	Password string `json:"admin_password"`
-	Nama     string `json:"admin_nama" validate:"required"`
-	Rule     string `json:"admin_rule" validate:"required"`
-	Status   string `json:"admin_status" validate:"required"`
+	Sdata          string `json:"sdata" validate:"required"`
+	Page           string `json:"page" validate:"required"`
+	Admin_id       int    `json:"admin_id"`
+	Admin_username string `json:"admin_username" validate:"required"`
+	Admin_password string `json:"admin_password"`
+	Admin_nama     string `json:"admin_nama" validate:"required"`
+	Admin_idrule   int    `json:"admin_idrule" validate:"required"`
+	Admin_status   string `json:"admin_status"`
 }
 
 type Responseredis_adminhome struct {
