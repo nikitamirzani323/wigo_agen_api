@@ -173,8 +173,8 @@ func Transaksi2D30Sprediksi(c *fiber.Ctx) error {
 		transaksi2D30sprediksi_status_css, _ := jsonparser.GetString(value, "transaksi2D30sprediksi_status_css")
 
 		obj.Transaksi2D30Sprediksi_id = transaksi2D30sprediksi_id
-		obj.Transaksi2D30Sprediksi_date = transaksi2D30sprediksi_username
-		obj.Transaksi2D30Sprediksi_username = transaksi2D30sprediksi_date
+		obj.Transaksi2D30Sprediksi_date = transaksi2D30sprediksi_date
+		obj.Transaksi2D30Sprediksi_username = transaksi2D30sprediksi_username
 		obj.Transaksi2D30Sprediksi_nomor = transaksi2D30sprediksi_nomor
 		obj.Transaksi2D30Sprediksi_bet = int(transaksi2D30sprediksi_bet)
 		obj.Transaksi2D30Sprediksi_win = int(transaksi2D30sprediksi_win)
