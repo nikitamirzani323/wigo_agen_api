@@ -84,3 +84,18 @@ func DeleteRedis(key string) int {
 	rdb.Close()
 	return value
 }
+func SetPublish(key string, data interface{}) {
+	dbHost := os.Getenv("DB_REDIS_HOST") + ":" + os.Getenv("DB_REDIS_PORT")
+	dbPass := os.Getenv("DB_REDIS_PASSWORD")
+	dbName, _ := strconv.Atoi(os.Getenv("DB_REDIS_NAME"))
+
+	rdb := redis.NewClient(&redis.Options{
+		Addr:     dbHost,
+		Password: dbPass,
+		DB:       dbName,
+	})
+	json, _ := json.Marshal(data)
+	err := rdb.Publish(ctx, key, json).Err()
+	rdb.Close()
+	ErrorCheck(err)
+}

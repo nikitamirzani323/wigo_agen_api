@@ -14,6 +14,23 @@ type Responsepaging struct {
 	Totalrecord int         `json:"totalrecord"`
 	Time        string      `json:"time"`
 }
+type ResponseTransaksi2D30S struct {
+	Status  int         `json:"status"`
+	Message string      `json:"message"`
+	Record  interface{} `json:"record"`
+	Periode string      `json:"periode"`
+	Time    string      `json:"time"`
+}
+type ResponseTransaksi2D30SPrediksi struct {
+	Status      int         `json:"status"`
+	Message     string      `json:"message"`
+	Record      interface{} `json:"record"`
+	TotalMember int         `json:"totalmember"`
+	Totalbet    int         `json:"totalbet"`
+	Totalwin    int         `json:"totalwin"`
+	Winlose     int         `json:"winlose"`
+	Time        string      `json:"time"`
+}
 type Responsercompany struct {
 	Status      int         `json:"status"`
 	Message     string      `json:"message"`
