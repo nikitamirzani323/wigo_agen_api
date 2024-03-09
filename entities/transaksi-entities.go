@@ -32,7 +32,6 @@ type Controller_transaksi2D30Ssave struct {
 }
 type Controller_transaksi2D30S struct {
 	Transaksi2D30S_search  string `json:"transaksi2D30s_search"`
-	Transaksi2D30S_status  string `json:"transaksi2D30s_status"`
 	Transaksi2D30S_page    int    `json:"transaksi2D30s_page"`
 	Transaksi2D30S_invoice string `json:"transaksi2D30s_invoice"`
 }

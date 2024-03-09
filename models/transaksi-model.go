@@ -220,6 +220,7 @@ func Save_updateresult2D30S(admin, idrecord, idcompany, result string) (helpers.
 
 	const invoice_client_redis = "CLIENT_LISTINVOICE"
 	const invoice_result_redis = "CLIENT_RESULT"
+	const invoice_agen_redis = "LISTINVOICE_2D30S_AGEN"
 
 	_, tbl_trx_transaksi, tbl_trx_transaksidetail := Get_mappingdatabase(idcompany)
 
@@ -317,6 +318,14 @@ func Save_updateresult2D30S(admin, idrecord, idcompany, result string) (helpers.
 			fmt.Println("")
 			fmt.Printf("Redis Delete RESULT : %d - %s \r", val_result, key_redis_result)
 			fmt.Println("")
+
+			for i := 0; i <= 1000; i = i + 250 {
+				//LISTINVOICE_2D30S_AGEN_nuke_0_
+				key_redis_ageninvoice := invoice_agen_redis + "_" + strings.ToLower(idcompany) + "_" + strconv.Itoa(i)
+				val_result := helpers.DeleteRedis(key_redis_ageninvoice)
+				fmt.Printf("Redis Delete AGEN INVOICE : %d - %s \n", val_result, key_redis_ageninvoice)
+			}
+
 			idcurr := _GetCompanyInfo(idcompany)
 			invoice := _Generate_incoive(strings.ToLower(idcompany), idcurr)
 
