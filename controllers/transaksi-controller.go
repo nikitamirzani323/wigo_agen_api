@@ -2,6 +2,7 @@ package controllers
 
 import (
 	"fmt"
+	"strconv"
 	"strings"
 	"time"
 
@@ -55,7 +56,13 @@ func Transaksi2D30Shome(c *fiber.Ctx) error {
 	if client.Transaksi2D30S_invoice != "" {
 		fieldredis = Fieldtransaksi2d30s_home_redis + "_" + strings.ToLower(client_company) + "_" + client.Transaksi2D30S_invoice
 	} else {
-		fieldredis = Fieldtransaksi2d30s_home_redis + "_" + strings.ToLower(client_company)
+		if client.Transaksi2D30S_search != "" {
+			fieldredis = Fieldtransaksi2d30s_home_redis + "_" + strings.ToLower(client_company) + "_" + strconv.Itoa(client.Transaksi2D30S_page) + "_" + client.Transaksi2D30S_search
+			val_pattern := helpers.DeleteRedis(fieldredis)
+			fmt.Printf("Redis Delete INVOICE : %d", val_pattern)
+		} else {
+			fieldredis = Fieldtransaksi2d30s_home_redis + "_" + strings.ToLower(client_company) + "_" + strconv.Itoa(client.Transaksi2D30S_page) + "_" + client.Transaksi2D30S_search
+		}
 	}
 
 	var obj entities.Model_transaksi2D30S
@@ -63,13 +70,16 @@ func Transaksi2D30Shome(c *fiber.Ctx) error {
 	render_page := time.Now()
 	resultredis, flag := helpers.GetRedis(fieldredis)
 	jsonredis := []byte(resultredis)
+	perpage_RD, _ := jsonparser.GetInt(jsonredis, "perpage")
+	totalrecord_RD, _ := jsonparser.GetInt(jsonredis, "totalrecord")
 	record_RD, _, _, _ := jsonparser.Get(jsonredis, "record")
-	periode_RD, _ := jsonparser.GetInt(jsonredis, "periode")
+	periode_RD, _ := jsonparser.GetString(jsonredis, "periode")
 	jsonparser.ArrayEach(record_RD, func(value []byte, dataType jsonparser.ValueType, offset int, err error) {
 		transaksi2D30s_id, _ := jsonparser.GetString(value, "transaksi2D30s_id")
 		transaksi2D30s_idcurr, _ := jsonparser.GetString(value, "transaksi2D30s_idcurr")
 		transaksi2D30s_date, _ := jsonparser.GetString(value, "transaksi2D30s_date")
 		transaksi2D30s_result, _ := jsonparser.GetString(value, "transaksi2D30s_result")
+		transaksi2D30s_totalmember, _ := jsonparser.GetInt(value, "transaksi2D30s_totalmember")
 		transaksi2D30s_totalbet, _ := jsonparser.GetInt(value, "transaksi2D30s_totalbet")
 		transaksi2D30s_totalwin, _ := jsonparser.GetInt(value, "transaksi2D30s_totalwin")
 		transaksi2D30s_winlose, _ := jsonparser.GetInt(value, "transaksi2D30s_winlose")
@@ -82,6 +92,7 @@ func Transaksi2D30Shome(c *fiber.Ctx) error {
 		obj.Transaksi2D30S_idcurr = transaksi2D30s_idcurr
 		obj.Transaksi2D30S_date = transaksi2D30s_date
 		obj.Transaksi2D30S_result = transaksi2D30s_result
+		obj.Transaksi2D30S_totalmember = int(transaksi2D30s_totalmember)
 		obj.Transaksi2D30S_totalbet = int(transaksi2D30s_totalbet)
 		obj.Transaksi2D30S_totalwin = int(transaksi2D30s_totalwin)
 		obj.Transaksi2D30S_winlose = int(transaksi2D30s_winlose)
@@ -93,7 +104,8 @@ func Transaksi2D30Shome(c *fiber.Ctx) error {
 	})
 
 	if !flag {
-		result, err := models.Fetch_transaksi2D30SHome(client_company, client.Transaksi2D30S_invoice)
+		//idcompany, idinvoice, search string, page int
+		result, err := models.Fetch_transaksi2D30SHome(client_company, client.Transaksi2D30S_invoice, client.Transaksi2D30S_search, client.Transaksi2D30S_page)
 		if err != nil {
 			c.Status(fiber.StatusBadRequest)
 			return c.JSON(fiber.Map{
@@ -108,11 +120,13 @@ func Transaksi2D30Shome(c *fiber.Ctx) error {
 	} else {
 		fmt.Println("TRANSAKSI 2D30S CACHE")
 		return c.JSON(fiber.Map{
-			"status":  fiber.StatusOK,
-			"message": "Success",
-			"record":  arraobj,
-			"periode": periode_RD,
-			"time":    time.Since(render_page).String(),
+			"status":      fiber.StatusOK,
+			"message":     "Success",
+			"record":      arraobj,
+			"periode":     periode_RD,
+			"perpage":     perpage_RD,
+			"totalrecord": totalrecord_RD,
+			"time":        time.Since(render_page).String(),
 		})
 	}
 }

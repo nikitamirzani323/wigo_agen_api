@@ -17,7 +17,7 @@ import (
 	"github.com/nleeper/goment"
 )
 
-func Fetch_transaksi2D30SHome(idcompany, idinvoice string) (helpers.ResponseTransaksi2D30S, error) {
+func Fetch_transaksi2D30SHome(idcompany, idinvoice, search string, page int) (helpers.ResponseTransaksi2D30S, error) {
 	var obj entities.Model_transaksi2D30S
 	var arraobj []entities.Model_transaksi2D30S
 	var res helpers.ResponseTransaksi2D30S
@@ -34,34 +34,66 @@ func Fetch_transaksi2D30SHome(idcompany, idinvoice string) (helpers.ResponseTran
 
 	_, tbl_trx_transaksi, _ := Get_mappingdatabase(idcompany)
 
+	perpage := configs.PAGING_PAGE
+	totalrecord := 0
+	offset := page
+	sql_selectcount := ""
+	sql_selectcount += ""
+	sql_selectcount += "SELECT "
+	sql_selectcount += "COUNT(idtransaksi) as totalpurchase  "
+	sql_selectcount += "FROM " + tbl_trx_transaksi + "  "
+	sql_selectcount += "WHERE LOWER(idcompany)='" + strings.ToLower(idcompany) + "' "
+	if search != "" {
+		sql_selectcount += "WHERE idtransaksi LIKE '%" + strings.ToLower(search) + "%' "
+	} else {
+		if idinvoice != "" {
+			sql_selectcount += "AND idtransaksi='" + idinvoice + "' "
+		} else {
+			sql_selectcount += "AND createdate_transaksi >='" + startdate + "' "
+			sql_selectcount += "AND createdate_transaksi <='" + enddate + "' "
+		}
+	}
+
+	row_selectcount := con.QueryRowContext(ctx, sql_selectcount)
+	switch e_selectcount := row_selectcount.Scan(&totalrecord); e_selectcount {
+	case sql.ErrNoRows:
+	case nil:
+	default:
+		helpers.ErrorCheck(e_selectcount)
+	}
+
 	sql_select := ""
 	sql_select += "SELECT "
-	sql_select += "idtransaksi,idcurr,datetransaksi,  "
-	sql_select += "resultwigo,total_bet,total_win,  "
+	sql_select += "idtransaksi,idcurr,to_char(COALESCE(createdate_transaksi,now()), 'YYYY-MM-DD HH24:MI:SS'),  "
+	sql_select += "resultwigo,total_member,total_bet,total_win,  "
 	sql_select += "status_transaksi, "
 	sql_select += "create_transaksi, to_char(COALESCE(createdate_transaksi,now()), 'YYYY-MM-DD HH24:MI:SS'), "
 	sql_select += "update_transaksi, to_char(COALESCE(updatedate_transaksi,now()), 'YYYY-MM-DD HH24:MI:SS')  "
 	sql_select += "FROM " + tbl_trx_transaksi + "   "
 	sql_select += "WHERE LOWER(idcompany)='" + strings.ToLower(idcompany) + "' "
-	if idinvoice != "" {
-		sql_select += "AND idtransaksi='" + idinvoice + "' "
+	if search != "" {
+		sql_select += "WHERE idtransaksi LIKE '%" + strings.ToLower(search) + "%' "
 	} else {
-		sql_select += "AND createdate_transaksi >='" + startdate + "' "
-		sql_select += "AND createdate_transaksi <='" + enddate + "' "
+		if idinvoice != "" {
+			sql_select += "AND idtransaksi='" + idinvoice + "' "
+		} else {
+			sql_select += "AND createdate_transaksi >='" + startdate + "' "
+			sql_select += "AND createdate_transaksi <='" + enddate + "' "
+		}
 	}
-	sql_select += "ORDER BY datetransaksi DESC    "
+	sql_select += "ORDER BY createdate_transaksi DESC   OFFSET " + strconv.Itoa(offset) + " LIMIT " + strconv.Itoa(perpage)
 	log.Println(sql_select)
 	row, err := con.QueryContext(ctx, sql_select)
 	helpers.ErrorCheck(err)
 	for row.Next() {
 		var (
-			idtransaksi_db, idcurr_db, datetransaksi_db, resultwigo_db, status_transaksi_db            string
-			total_bet_db, total_win_db                                                                 int
+			idtransaksi_db, idcurr_db, createdate_transaksi, resultwigo_db, status_transaksi_db        string
+			total_member_db, total_bet_db, total_win_db                                                int
 			create_transaksi_db, createdate_transaksi_db, update_transaksi_db, updatedate_transaksi_db string
 		)
 
-		err = row.Scan(&idtransaksi_db, &idcurr_db, &datetransaksi_db,
-			&resultwigo_db, &total_bet_db, &total_win_db, &status_transaksi_db,
+		err = row.Scan(&idtransaksi_db, &idcurr_db, &createdate_transaksi,
+			&resultwigo_db, &total_member_db, &total_bet_db, &total_win_db, &status_transaksi_db,
 			&create_transaksi_db, &createdate_transaksi_db, &update_transaksi_db, &updatedate_transaksi_db)
 
 		helpers.ErrorCheck(err)
@@ -80,8 +112,9 @@ func Fetch_transaksi2D30SHome(idcompany, idinvoice string) (helpers.ResponseTran
 
 		obj.Transaksi2D30S_id = idtransaksi_db
 		obj.Transaksi2D30S_idcurr = idcurr_db
-		obj.Transaksi2D30S_date = datetransaksi_db
+		obj.Transaksi2D30S_date = createdate_transaksi
 		obj.Transaksi2D30S_result = resultwigo_db
+		obj.Transaksi2D30S_totalmember = total_member_db
 		obj.Transaksi2D30S_totalbet = total_bet_db
 		obj.Transaksi2D30S_totalwin = total_win_db
 		obj.Transaksi2D30S_winlose = total_bet_db - total_win_db
@@ -98,6 +131,8 @@ func Fetch_transaksi2D30SHome(idcompany, idinvoice string) (helpers.ResponseTran
 	res.Message = msg
 	res.Periode = periode
 	res.Record = arraobj
+	res.Perpage = perpage
+	res.Totalrecord = totalrecord
 	res.Time = time.Since(start).String()
 
 	return res, nil
@@ -258,22 +293,24 @@ func Save_updateresult2D30S(admin, idrecord, idcompany, result string) (helpers.
 			defer row.Close()
 			if flag_detail {
 				// UPDATE PARENT
+				total_member := _GetTotalMember_Transaksi(tbl_trx_transaksidetail, idrecord)
 				total_bet, total_win := _GetTotalBetWin_Transaksi(tbl_trx_transaksidetail, idrecord)
 				sql_update_parent := `
 					UPDATE 
 					` + tbl_trx_transaksi + `  
-					SET total_bet=$1, total_win=$2, 
-					update_transaksi=$3, updatedate_transaksi=$4           
-					WHERE idtransaksi=$5       
+					SET total_bet=$1, total_win=$2, total_member=$3,
+					update_transaksi=$4, updatedate_transaksi=$5            
+					WHERE idtransaksi=$6    
 				`
 				flag_update_parent, msg_update_parent := Exec_SQL(sql_update_parent, tbl_trx_transaksi, "UPDATE",
-					total_bet, total_win,
+					total_bet, total_win, total_member,
 					admin, tglnow.Format("YYYY-MM-DD HH:mm:ss"), idrecord)
 
 				if !flag_update_parent {
 					fmt.Println(msg_update_parent)
 
 				}
+
 			}
 			key_redis_result := invoice_result_redis + "_" + strings.ToLower(idcompany)
 			val_result := helpers.DeleteRedis(key_redis_result)
@@ -456,6 +493,26 @@ func _GetTotalBetWin_Transaksi(table, idtransaksi string) (int, int) {
 	}
 
 	return total_bet, total_win
+}
+func _GetTotalMember_Transaksi(table, idtransaksi string) int {
+	con := db.CreateCon()
+	ctx := context.Background()
+	total_member := 0
+	sql_select := ""
+	sql_select += "SELECT "
+	sql_select += "COUNT(username_client) AS total_member  "
+	sql_select += "FROM " + table + " "
+	sql_select += "WHERE idtransaksi='" + idtransaksi + "'   "
+
+	row := con.QueryRowContext(ctx, sql_select)
+	switch e := row.Scan(&total_member); e {
+	case sql.ErrNoRows:
+	case nil:
+	default:
+		helpers.ErrorCheck(e)
+	}
+
+	return total_member
 }
 func _rumuswigo2D30S(nomorclient, nomorkeluaran string) string {
 	result := "LOSE"

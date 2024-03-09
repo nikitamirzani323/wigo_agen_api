@@ -11,7 +11,7 @@ const (
 	DB_tbl_mst_company_config    string = "tbl_mst_company_config"
 	DB_tbl_mst_company_money     string = "tbl_mst_company_money"
 
-	PAGING_PAGE     int    = 50
+	PAGING_PAGE     int    = 250
 	STATUS_NEW      string = "background:#0dcaf0;font-weight:bold;color:black;"
 	STATUS_NEW2     string = "background:#e0daf3;font-weight:bold;color:black;"
 	STATUS_RUNNING  string = "background:#FFEB3B;font-weight:bold;color:black;"
