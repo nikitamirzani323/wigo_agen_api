@@ -509,7 +509,7 @@ func _GetTotalMember_Transaksi(table, idtransaksi string) int {
 	total_member := 0
 	sql_select := ""
 	sql_select += "SELECT "
-	sql_select += "COUNT(username_client) AS total_member  "
+	sql_select += "COUNT(distinct(username_client)) AS total_member  "
 	sql_select += "FROM " + table + " "
 	sql_select += "WHERE idtransaksi='" + idtransaksi + "'   "
 
