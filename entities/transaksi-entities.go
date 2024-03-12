@@ -14,6 +14,23 @@ type Model_transaksi2D30S struct {
 	Transaksi2D30S_create      string `json:"transaksi2D30s_create"`
 	Transaksi2D30S_update      string `json:"transaksi2D30s_update"`
 }
+type Model_transaksi2D30Sdetail struct {
+	Transaksi2D30Sdetail_id         string  `json:"transaksi2D30sdetail_id"`
+	Transaksi2D30Sdetail_date       string  `json:"transaksi2D30sdetail_date"`
+	Transaksi2D30Sdetail_ipaddress  string  `json:"transaksi2D30sdetail_ipaddress"`
+	Transaksi2D30Sdetail_device     string  `json:"transaksi2D30sdetail_device"`
+	Transaksi2D30Sdetail_browser    string  `json:"transaksi2D30sdetail_browser"`
+	Transaksi2D30Sdetail_username   string  `json:"transaksi2D30sdetail_username"`
+	Transaksi2D30Sdetail_tipebet    string  `json:"transaksi2D30sdetail_tipebet"`
+	Transaksi2D30Sdetail_nomor      string  `json:"transaksi2D30sdetail_nomor"`
+	Transaksi2D30Sdetail_bet        int     `json:"transaksi2D30sdetail_bet"`
+	Transaksi2D30Sdetail_win        int     `json:"transaksi2D30sdetail_win"`
+	Transaksi2D30Sdetail_multiplier float64 `json:"transaksi2D30sdetail_multiplier"`
+	Transaksi2D30Sdetail_status     string  `json:"transaksi2D30sdetail_status"`
+	Transaksi2D30Sdetail_status_css string  `json:"transaksi2D30sdetail_status_css"`
+	Transaksi2D30Sdetail_create     string  `json:"transaksi2D30sdetail_create"`
+	Transaksi2D30Sdetail_update     string  `json:"transaksi2D30sdetail_update"`
+}
 type Model_transaksi2D30SPrediksi struct {
 	Transaksi2D30Sprediksi_id         string `json:"transaksi2D30sprediksi_id"`
 	Transaksi2D30Sprediksi_username   string `json:"transaksi2D30sprediksi_username"`
@@ -38,4 +55,8 @@ type Controller_transaksi2D30S struct {
 type Controller_prediksitransaksi2D30S struct {
 	Transaksi2D30Sprediksi_invoice string `json:"transaksi2D30sprediksi_invoice"`
 	Transaksi2D30Sprediksi_result  string `json:"transaksi2D30sprediksi_result"`
+}
+type Controller_transaksidetail2D30S struct {
+	Transaksidetail2D30S_invoice string `json:"transaksidetail2D30s_invoice"`
+	Transaksidetail2D30S_status  string `json:"transaksidetail2D30s_status"`
 }

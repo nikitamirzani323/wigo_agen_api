@@ -71,6 +71,10 @@ func Transaksi2D30Shome(c *fiber.Ctx) error {
 	resultredis, flag := helpers.GetRedis(fieldredis)
 	jsonredis := []byte(resultredis)
 	perpage_RD, _ := jsonparser.GetInt(jsonredis, "perpage")
+	totalbet_RD, _ := jsonparser.GetInt(jsonredis, "totalbet")
+	totalwin_RD, _ := jsonparser.GetInt(jsonredis, "totalwin")
+	winlose_agen_RD, _ := jsonparser.GetInt(jsonredis, "winlose_agen")
+	winlose_member_RD, _ := jsonparser.GetInt(jsonredis, "winlose_member")
 	totalrecord_RD, _ := jsonparser.GetInt(jsonredis, "totalrecord")
 	record_RD, _, _, _ := jsonparser.Get(jsonredis, "record")
 	periode_RD, _ := jsonparser.GetString(jsonredis, "periode")
@@ -120,13 +124,120 @@ func Transaksi2D30Shome(c *fiber.Ctx) error {
 	} else {
 		fmt.Println("TRANSAKSI 2D30S CACHE")
 		return c.JSON(fiber.Map{
-			"status":      fiber.StatusOK,
-			"message":     "Success",
-			"record":      arraobj,
-			"periode":     periode_RD,
-			"perpage":     perpage_RD,
-			"totalrecord": totalrecord_RD,
-			"time":        time.Since(render_page).String(),
+			"status":         fiber.StatusOK,
+			"message":        "Success",
+			"record":         arraobj,
+			"periode":        periode_RD,
+			"perpage":        perpage_RD,
+			"totalrecord":    totalrecord_RD,
+			"totalbet":       totalbet_RD,
+			"totalwin":       totalwin_RD,
+			"winlose_agen":   winlose_agen_RD,
+			"winlose_member": winlose_member_RD,
+			"time":           time.Since(render_page).String(),
+		})
+	}
+}
+func Transaksi2D30Sdetail(c *fiber.Ctx) error {
+	var errors []*helpers.ErrorResponse
+	client := new(entities.Controller_transaksidetail2D30S)
+	validate := validator.New()
+	if err := c.BodyParser(client); err != nil {
+		c.Status(fiber.StatusBadRequest)
+		return c.JSON(fiber.Map{
+			"status":  fiber.StatusBadRequest,
+			"message": err.Error(),
+			"record":  nil,
+		})
+	}
+
+	err := validate.Struct(client)
+	if err != nil {
+		for _, err := range err.(validator.ValidationErrors) {
+			var element helpers.ErrorResponse
+			element.Field = err.StructField()
+			element.Tag = err.Tag()
+			errors = append(errors, &element)
+		}
+		c.Status(fiber.StatusBadRequest)
+		return c.JSON(fiber.Map{
+			"status":  fiber.StatusBadRequest,
+			"message": "validation",
+			"record":  errors,
+		})
+	}
+
+	user := c.Locals("jwt").(*jwt.Token)
+	claims := user.Claims.(jwt.MapClaims)
+	name := claims["name"].(string)
+	temp_decp := helpers.Decryption(name)
+	_, client_company, _ := helpers.Parsing_Decry(temp_decp, "==")
+
+	fieldredis := ""
+	fieldredis = Fieldtransaksi2d30s_home_redis + "_" + strings.ToLower(client_company) + "_DETAIL_" + client.Transaksidetail2D30S_invoice + "_" + client.Transaksidetail2D30S_status
+
+	var obj entities.Model_transaksi2D30Sdetail
+	var arraobj []entities.Model_transaksi2D30Sdetail
+	render_page := time.Now()
+	resultredis, flag := helpers.GetRedis(fieldredis)
+	jsonredis := []byte(resultredis)
+	record_RD, _, _, _ := jsonparser.Get(jsonredis, "record")
+	jsonparser.ArrayEach(record_RD, func(value []byte, dataType jsonparser.ValueType, offset int, err error) {
+		transaksi2D30sdetail_id, _ := jsonparser.GetString(value, "transaksi2D30sdetail_id")
+		transaksi2D30sdetail_date, _ := jsonparser.GetString(value, "transaksi2D30sdetail_date")
+		transaksi2D30sdetail_ipaddress, _ := jsonparser.GetString(value, "transaksi2D30sdetail_ipaddress")
+		transaksi2D30sdetail_device, _ := jsonparser.GetString(value, "transaksi2D30sdetail_device")
+		transaksi2D30sdetail_browser, _ := jsonparser.GetString(value, "transaksi2D30sdetail_browser")
+		transaksi2D30sdetail_username, _ := jsonparser.GetString(value, "transaksi2D30sdetail_username")
+		transaksi2D30sdetail_tipebet, _ := jsonparser.GetString(value, "transaksi2D30sdetail_tipebet")
+		transaksi2D30sdetail_nomor, _ := jsonparser.GetString(value, "transaksi2D30sdetail_nomor")
+		transaksi2D30sdetail_bet, _ := jsonparser.GetInt(value, "transaksi2D30sdetail_bet")
+		transaksi2D30sdetail_win, _ := jsonparser.GetInt(value, "transaksi2D30sdetail_win")
+		transaksi2D30sdetail_multiplier, _ := jsonparser.GetFloat(value, "transaksi2D30sdetail_multiplier")
+		transaksi2D30sdetail_status, _ := jsonparser.GetString(value, "transaksi2D30sdetail_status")
+		transaksi2D30sdetail_status_css, _ := jsonparser.GetString(value, "transaksi2D30sdetail_status_css")
+		transaksi2D30sdetail_create, _ := jsonparser.GetString(value, "transaksi2D30sdetail_create")
+		transaksi2D30sdetail_update, _ := jsonparser.GetString(value, "transaksi2D30sdetail_update")
+
+		obj.Transaksi2D30Sdetail_id = transaksi2D30sdetail_id
+		obj.Transaksi2D30Sdetail_date = transaksi2D30sdetail_date
+		obj.Transaksi2D30Sdetail_ipaddress = transaksi2D30sdetail_ipaddress
+		obj.Transaksi2D30Sdetail_browser = transaksi2D30sdetail_browser
+		obj.Transaksi2D30Sdetail_device = transaksi2D30sdetail_device
+		obj.Transaksi2D30Sdetail_username = transaksi2D30sdetail_username
+		obj.Transaksi2D30Sdetail_tipebet = transaksi2D30sdetail_tipebet
+		obj.Transaksi2D30Sdetail_nomor = transaksi2D30sdetail_nomor
+		obj.Transaksi2D30Sdetail_bet = int(transaksi2D30sdetail_bet)
+		obj.Transaksi2D30Sdetail_win = int(transaksi2D30sdetail_win)
+		obj.Transaksi2D30Sdetail_multiplier = float64(transaksi2D30sdetail_multiplier)
+		obj.Transaksi2D30Sdetail_status = transaksi2D30sdetail_status
+		obj.Transaksi2D30Sdetail_status_css = transaksi2D30sdetail_status_css
+		obj.Transaksi2D30Sdetail_create = transaksi2D30sdetail_create
+		obj.Transaksi2D30Sdetail_update = transaksi2D30sdetail_update
+		arraobj = append(arraobj, obj)
+	})
+
+	if !flag {
+		//idcompany, idtransaksi, status string
+		result, err := models.Fetch_transaksi2D30SDetail(client_company, client.Transaksidetail2D30S_invoice, client.Transaksidetail2D30S_status)
+		if err != nil {
+			c.Status(fiber.StatusBadRequest)
+			return c.JSON(fiber.Map{
+				"status":  fiber.StatusBadRequest,
+				"message": err.Error(),
+				"record":  nil,
+			})
+		}
+		helpers.SetRedis(fieldredis, result, 60*time.Minute)
+		fmt.Println("TRANSAKSI DETAIL 2D30S DATABASE")
+		return c.JSON(result)
+	} else {
+		fmt.Println("TRANSAKSI DETAIL 2D30S CACHE")
+		return c.JSON(fiber.Map{
+			"status":  fiber.StatusOK,
+			"message": "Success",
+			"record":  arraobj,
+			"time":    time.Since(render_page).String(),
 		})
 	}
 }

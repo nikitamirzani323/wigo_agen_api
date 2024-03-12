@@ -4,7 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
-	"log"
+	"math"
 	"strconv"
 	"strings"
 	"time"
@@ -82,7 +82,7 @@ func Fetch_transaksi2D30SHome(idcompany, idinvoice, search string, page int) (he
 		}
 	}
 	sql_select += "ORDER BY createdate_transaksi DESC   OFFSET " + strconv.Itoa(offset) + " LIMIT " + strconv.Itoa(perpage)
-	log.Println(sql_select)
+
 	row, err := con.QueryContext(ctx, sql_select)
 	helpers.ErrorCheck(err)
 	for row.Next() {
@@ -127,12 +127,106 @@ func Fetch_transaksi2D30SHome(idcompany, idinvoice, search string, page int) (he
 	}
 	defer row.Close()
 
+	total_bet, total_win := _GetTotalBetWinByDate_Transaksi(tbl_trx_transaksi, startdate, enddate)
+	var winlose_agen float64 = 0
+	var winlose_member float64 = 0
+	winlose_agen = float64(total_bet - total_win)
+	if winlose_agen < 0 {
+		winlose_member = math.Abs(winlose_agen)
+	} else {
+		winlose_member = -winlose_agen
+	}
+
 	res.Status = fiber.StatusOK
 	res.Message = msg
 	res.Periode = periode
 	res.Record = arraobj
 	res.Perpage = perpage
 	res.Totalrecord = totalrecord
+	res.TotalBet = total_bet
+	res.TotalWin = total_win
+	res.Winlose_agen = int(winlose_agen)
+	res.Winlose_member = int(winlose_member)
+	res.Time = time.Since(start).String()
+
+	return res, nil
+}
+func Fetch_transaksi2D30SDetail(idcompany, idtransaksi, status string) (helpers.Response, error) {
+	var obj entities.Model_transaksi2D30Sdetail
+	var arraobj []entities.Model_transaksi2D30Sdetail
+	var res helpers.Response
+	msg := "Data Not Found"
+	con := db.CreateCon()
+	ctx := context.Background()
+	start := time.Now()
+
+	_, _, tbl_trx_transaksidetail := Get_mappingdatabase(idcompany)
+
+	sql_select := ""
+	sql_select += "SELECT "
+	sql_select += "idtransaksidetail,  "
+	sql_select += "username_client,ipaddress_client,browser_client,device_client,  "
+	sql_select += "nomor,tipebet,bet,win,multiplier,  "
+	sql_select += "status_transaksidetail, "
+	sql_select += "create_transaksidetail, to_char(COALESCE(createdate_transaksidetail,now()), 'YYYY-MM-DD HH24:MI:SS'), "
+	sql_select += "update_transaksidetail, to_char(COALESCE(updatedate_transaksidetail,now()), 'YYYY-MM-DD HH24:MI:SS')  "
+	sql_select += "FROM " + tbl_trx_transaksidetail + "   "
+	sql_select += "WHERE idtransaksi='" + idtransaksi + "' "
+	sql_select += "AND status_transaksidetail='" + status + "' "
+	sql_select += "ORDER BY createdate_transaksidetail DESC    "
+
+	row, err := con.QueryContext(ctx, sql_select)
+	helpers.ErrorCheck(err)
+	for row.Next() {
+		var (
+			idtransaksidetail_db, nomor_db, tipebet_db, status_transaksidetail_db                                              string
+			username_client_db, ipaddress_client_db, browser_client_db, device_client_db                                       string
+			bet_db, win_db                                                                                                     int
+			multiplier_db                                                                                                      float64
+			create_transaksidetail_db, createdate_transaksidetail_db, update_transaksidetail_db, updatedate_transaksidetail_db string
+		)
+
+		err = row.Scan(&idtransaksidetail_db, &username_client_db, &ipaddress_client_db, &browser_client_db, &device_client_db,
+			&nomor_db, &tipebet_db, &bet_db, &win_db, &multiplier_db, &status_transaksidetail_db,
+			&create_transaksidetail_db, &createdate_transaksidetail_db, &update_transaksidetail_db, &updatedate_transaksidetail_db)
+
+		helpers.ErrorCheck(err)
+		create := ""
+		update := ""
+		status_css := configs.STATUS_CANCEL
+		if create_transaksidetail_db != "" {
+			create = create_transaksidetail_db + ", " + createdate_transaksidetail_db
+		}
+		if update_transaksidetail_db != "" {
+			update = update_transaksidetail_db + ", " + updatedate_transaksidetail_db
+		}
+		if status_transaksidetail_db == "Y" {
+			status_css = configs.STATUS_COMPLETE
+		}
+
+		obj.Transaksi2D30Sdetail_id = idtransaksidetail_db
+		obj.Transaksi2D30Sdetail_date = createdate_transaksidetail_db
+		obj.Transaksi2D30Sdetail_ipaddress = ipaddress_client_db
+		obj.Transaksi2D30Sdetail_browser = browser_client_db
+		obj.Transaksi2D30Sdetail_device = device_client_db
+		obj.Transaksi2D30Sdetail_username = username_client_db
+		obj.Transaksi2D30Sdetail_tipebet = tipebet_db
+		obj.Transaksi2D30Sdetail_nomor = nomor_db
+		obj.Transaksi2D30Sdetail_bet = bet_db
+		obj.Transaksi2D30Sdetail_win = win_db
+		obj.Transaksi2D30Sdetail_multiplier = multiplier_db
+		obj.Transaksi2D30Sdetail_status = status_transaksidetail_db
+		obj.Transaksi2D30Sdetail_status_css = status_css
+		obj.Transaksi2D30Sdetail_create = create
+		obj.Transaksi2D30Sdetail_update = update
+		arraobj = append(arraobj, obj)
+		msg = "Success"
+	}
+	defer row.Close()
+
+	res.Status = fiber.StatusOK
+	res.Message = msg
+	res.Record = arraobj
 	res.Time = time.Since(start).String()
 
 	return res, nil
@@ -152,7 +246,7 @@ func Fetch_transaksi2D30SPrediksi(idcompany, idinvoice, result string) (helpers.
 	total_win := 0
 	winlose := 0
 	sql_select_detail := `SELECT 
-					idtransaksidetail , nomor, bet, multiplier, username_client,
+					idtransaksidetail , nomor, tipebet, bet, multiplier, username_client,
 					to_char(COALESCE(createdate_transaksidetail,now()), 'YYYY-MM-DD HH24:MI:SS') 
 					FROM ` + tbl_trx_transaksidetail + `  
 					WHERE status_transaksidetail='RUNNING'  
@@ -162,18 +256,18 @@ func Fetch_transaksi2D30SPrediksi(idcompany, idinvoice, result string) (helpers.
 	helpers.ErrorCheck(err)
 	for row.Next() {
 		var (
-			bet_db                                                                            int
-			multiplier_db                                                                     float64
-			idtransaksidetail_db, nomor_db, username_client_db, createdate_transaksidetail_db string
+			bet_db                                                                                        int
+			multiplier_db                                                                                 float64
+			idtransaksidetail_db, nomor_db, tipebet_db, username_client_db, createdate_transaksidetail_db string
 		)
 
-		err = row.Scan(&idtransaksidetail_db, &nomor_db, &bet_db,
+		err = row.Scan(&idtransaksidetail_db, &nomor_db, &tipebet_db, &bet_db,
 			&multiplier_db, &username_client_db, &createdate_transaksidetail_db)
 		helpers.ErrorCheck(err)
 
 		total_bet = total_bet + bet_db
 
-		status_client := _rumuswigo2D30S(nomor_db, result)
+		status_client := _rumuswigo2D30S(tipebet_db, nomor_db, result)
 
 		win := 0
 		if status_client == "WIN" {
@@ -245,7 +339,7 @@ func Save_updateresult2D30S(admin, idrecord, idcompany, result string) (helpers.
 			ctx := context.Background()
 			flag_detail := false
 			sql_select_detail := `SELECT 
-					idtransaksidetail , nomor, bet, multiplier, username_client 
+					idtransaksidetail , nomor,tipebet, bet, multiplier, username_client 
 					FROM ` + tbl_trx_transaksidetail + `  
 					WHERE status_transaksidetail='RUNNING'  
 					AND idtransaksi='` + idrecord + `'  `
@@ -254,15 +348,15 @@ func Save_updateresult2D30S(admin, idrecord, idcompany, result string) (helpers.
 			helpers.ErrorCheck(err)
 			for row.Next() {
 				var (
-					bet_db                                             int
-					multiplier_db                                      float64
-					idtransaksidetail_db, nomor_db, username_client_db string
+					bet_db                                                         int
+					multiplier_db                                                  float64
+					idtransaksidetail_db, nomor_db, tipebet_db, username_client_db string
 				)
 
-				err = row.Scan(&idtransaksidetail_db, &nomor_db, &bet_db, &multiplier_db, &username_client_db)
+				err = row.Scan(&idtransaksidetail_db, &nomor_db, &tipebet_db, &bet_db, &multiplier_db, &username_client_db)
 				helpers.ErrorCheck(err)
 
-				status_client := _rumuswigo2D30S(nomor_db, result)
+				status_client := _rumuswigo2D30S(tipebet_db, nomor_db, result)
 				win := 0
 				if status_client == "WIN" {
 					win = bet_db + int(float64(bet_db)*multiplier_db)
@@ -321,7 +415,7 @@ func Save_updateresult2D30S(admin, idrecord, idcompany, result string) (helpers.
 
 			for i := 0; i <= 1000; i = i + 250 {
 				//LISTINVOICE_2D30S_AGEN_nuke_0_
-				key_redis_ageninvoice := invoice_agen_redis + "_" + strings.ToLower(idcompany) + "_" + strconv.Itoa(i)
+				key_redis_ageninvoice := invoice_agen_redis + "_" + strings.ToLower(idcompany) + "_" + strconv.Itoa(i) + "_"
 				val_result := helpers.DeleteRedis(key_redis_ageninvoice)
 				fmt.Printf("Redis Delete AGEN INVOICE : %d - %s \n", val_result, key_redis_ageninvoice)
 			}
@@ -523,10 +617,145 @@ func _GetTotalMember_Transaksi(table, idtransaksi string) int {
 
 	return total_member
 }
-func _rumuswigo2D30S(nomorclient, nomorkeluaran string) string {
+
+func _GetTotalBetWinByDate_Transaksi(table, startdate, enddate string) (int, int) {
+	con := db.CreateCon()
+	ctx := context.Background()
+	total_bet := 0
+	total_win := 0
+	sql_select := ""
+	sql_select += "SELECT "
+	sql_select += "SUM(total_bet) AS total_bet, SUM(total_win) AS total_win  "
+	sql_select += "FROM " + table + " "
+	sql_select += "WHERE createdate_transaksi >='" + startdate + "' "
+	sql_select += "AND createdate_transaksi <='" + enddate + "' "
+
+	row := con.QueryRowContext(ctx, sql_select)
+	switch e := row.Scan(&total_bet, &total_win); e {
+	case sql.ErrNoRows:
+	case nil:
+	default:
+		helpers.ErrorCheck(e)
+	}
+
+	return total_bet, total_win
+}
+
+// RUMUS
+func _rumuswigo2D30S(tipebet, nomorclient, nomorkeluaran string) string {
 	result := "LOSE"
-	if nomorclient == nomorkeluaran {
-		result = "WIN"
+
+	switch tipebet {
+	case "ANGKA":
+		if nomorclient == nomorkeluaran {
+			result = "WIN"
+		}
+	case "REDBLACK":
+		keluaran_ganjilgenap := _genapganjil(nomorkeluaran)
+		keluaran_besarkecil := _besarkecil(nomorkeluaran)
+
+		if nomorclient == keluaran_ganjilgenap {
+			result = "WIN"
+		}
+		if nomorclient == keluaran_besarkecil {
+			result = "WIN"
+		}
+	case "LINE":
+		keluaran_line := _line(nomorkeluaran)
+		if nomorclient == keluaran_line {
+			result = "WIN"
+		}
+	}
+
+	return result
+}
+func _genapganjil(nomorkeluaran string) string {
+	nomor_generator := ""
+	result := ""
+	for i := 0; i <= 99; i++ {
+		if i < 10 {
+			nomor_generator = "0" + strconv.Itoa(i)
+		} else {
+			nomor_generator = strconv.Itoa(i)
+		}
+		if i%2 == 0 {
+			if nomorkeluaran == nomor_generator {
+				result = "GENAP"
+				break
+			}
+
+		} else {
+			if nomorkeluaran == nomor_generator {
+				result = "GANJIL"
+				break
+			}
+		}
+	}
+	return result
+}
+func _besarkecil(nomorkeluaran string) string {
+	nomor_generator := ""
+	result := ""
+	for i := 0; i <= 99; i++ {
+		if i < 10 {
+			nomor_generator = "0" + strconv.Itoa(i)
+		} else {
+			nomor_generator = strconv.Itoa(i)
+		}
+		if i < 50 {
+			if nomorkeluaran == nomor_generator {
+				result = "KECIL"
+				break
+			}
+
+		} else {
+			if nomorkeluaran == nomor_generator {
+				result = "BESAR"
+				break
+			}
+		}
+	}
+	return result
+}
+func _line(nomorkeluaran string) string {
+	nomor_generator := ""
+	result := ""
+	for i := 0; i <= 99; i++ {
+		if i < 10 {
+			nomor_generator = "0" + strconv.Itoa(i)
+		} else {
+			nomor_generator = strconv.Itoa(i)
+		}
+		if i < 19 {
+			if nomorkeluaran == nomor_generator {
+				result = "LINE1"
+				break
+			}
+		}
+		if i > 19 && i < 40 {
+			if nomorkeluaran == nomor_generator {
+				result = "LINE2"
+				break
+			}
+		}
+		if i > 39 && i < 60 {
+			if nomorkeluaran == nomor_generator {
+				result = "LINE3"
+				break
+			}
+		}
+		if i > 59 && i < 80 {
+			if nomorkeluaran == nomor_generator {
+				result = "LINE4"
+				break
+			}
+		}
+		if i > 80 && i < 100 {
+			if nomorkeluaran == nomor_generator {
+				result = "LINE5"
+				break
+			}
+		}
 	}
 	return result
 }
