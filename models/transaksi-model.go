@@ -171,8 +171,13 @@ func Fetch_transaksi2D30SDetail(idcompany, idtransaksi, status string) (helpers.
 	sql_select += "create_transaksidetail, to_char(COALESCE(createdate_transaksidetail,now()), 'YYYY-MM-DD HH24:MI:SS'), "
 	sql_select += "update_transaksidetail, to_char(COALESCE(updatedate_transaksidetail,now()), 'YYYY-MM-DD HH24:MI:SS')  "
 	sql_select += "FROM " + tbl_trx_transaksidetail + "   "
-	sql_select += "WHERE idtransaksi='" + idtransaksi + "' "
-	sql_select += "AND status_transaksidetail='" + status + "' "
+	if idtransaksi != "" {
+		sql_select += "WHERE idtransaksi='" + idtransaksi + "' "
+		sql_select += "AND status_transaksidetail='" + status + "' "
+	} else {
+		sql_select += "WHERE status_transaksidetail='" + status + "' "
+	}
+
 	sql_select += "ORDER BY createdate_transaksidetail DESC    "
 
 	row, err := con.QueryContext(ctx, sql_select)
@@ -312,11 +317,7 @@ func Save_updateresult2D30S(admin, idrecord, idcompany, result string) (helpers.
 	tglnow, _ := goment.New()
 	render_page := time.Now()
 
-	const invoice_client_redis = "CLIENT_LISTINVOICE"
-	const invoice_result_redis = "CLIENT_RESULT"
-	const invoice_agen_redis = "LISTINVOICE_2D30S_AGEN"
-
-	_, tbl_trx_transaksi, tbl_trx_transaksidetail := Get_mappingdatabase(idcompany)
+	_, tbl_trx_transaksi, _ := Get_mappingdatabase(idcompany)
 
 	result_db, status_db := _GetInvoiceInfo(idrecord, idcompany)
 	if result_db == "" && status_db == "OPEN" {
@@ -335,103 +336,11 @@ func Save_updateresult2D30S(admin, idrecord, idcompany, result string) (helpers.
 		if flag_update {
 			msg = "Succes"
 
-			con := db.CreateCon()
-			ctx := context.Background()
-			flag_detail := false
-			sql_select_detail := `SELECT 
-					idtransaksidetail , nomor,tipebet, bet, multiplier, username_client 
-					FROM ` + tbl_trx_transaksidetail + `  
-					WHERE status_transaksidetail='RUNNING'  
-					AND idtransaksi='` + idrecord + `'  `
-
-			row, err := con.QueryContext(ctx, sql_select_detail)
-			helpers.ErrorCheck(err)
-			for row.Next() {
-				var (
-					bet_db                                                         int
-					multiplier_db                                                  float64
-					idtransaksidetail_db, nomor_db, tipebet_db, username_client_db string
-				)
-
-				err = row.Scan(&idtransaksidetail_db, &nomor_db, &tipebet_db, &bet_db, &multiplier_db, &username_client_db)
-				helpers.ErrorCheck(err)
-
-				status_client := _rumuswigo2D30S(tipebet_db, nomor_db, result)
-				win := 0
-				if status_client == "WIN" {
-					win = bet_db + int(float64(bet_db)*multiplier_db)
-				}
-
-				// UPDATE STATUS DETAIL
-				sql_update_detail := `
-					UPDATE 
-					` + tbl_trx_transaksidetail + `  
-					SET status_transaksidetail=$1, win=$2, 
-					update_transaksidetail=$3, updatedate_transaksidetail=$4           
-					WHERE idtransaksidetail=$5          
-				`
-				flag_update_detail, msg_update_detail := Exec_SQL(sql_update_detail, tbl_trx_transaksidetail, "UPDATE",
-					status_client, win,
-					"SYSTEM", tglnow.Format("YYYY-MM-DD HH:mm:ss"), idtransaksidetail_db)
-
-				if !flag_update_detail {
-					fmt.Println(msg_update_detail)
-				}
-				flag_detail = true
-
-				key_redis_invoice_client := invoice_client_redis + "_" + strings.ToLower(idcompany) + "_" + strings.ToLower(username_client_db)
-				val_invoice_client := helpers.DeleteRedis(key_redis_invoice_client)
-				fmt.Println("")
-				fmt.Printf("Redis Delete INVOICE : %d - %s \r", val_invoice_client, key_redis_invoice_client)
-				fmt.Println("")
-			}
-			defer row.Close()
-			if flag_detail {
-				// UPDATE PARENT
-				total_member := _GetTotalMember_Transaksi(tbl_trx_transaksidetail, idrecord)
-				total_bet, total_win := _GetTotalBetWin_Transaksi(tbl_trx_transaksidetail, idrecord)
-				sql_update_parent := `
-					UPDATE 
-					` + tbl_trx_transaksi + `  
-					SET total_bet=$1, total_win=$2, total_member=$3,
-					update_transaksi=$4, updatedate_transaksi=$5            
-					WHERE idtransaksi=$6    
-				`
-				flag_update_parent, msg_update_parent := Exec_SQL(sql_update_parent, tbl_trx_transaksi, "UPDATE",
-					total_bet, total_win, total_member,
-					admin, tglnow.Format("YYYY-MM-DD HH:mm:ss"), idrecord)
-
-				if !flag_update_parent {
-					fmt.Println(msg_update_parent)
-
-				}
-
-			}
-			key_redis_result := invoice_result_redis + "_" + strings.ToLower(idcompany)
-			val_result := helpers.DeleteRedis(key_redis_result)
-			fmt.Println("")
-			fmt.Printf("Redis Delete RESULT : %d - %s \r", val_result, key_redis_result)
-			fmt.Println("")
-
-			for i := 0; i <= 1000; i = i + 250 {
-				//LISTINVOICE_2D30S_AGEN_nuke_0_
-				key_redis_ageninvoice := invoice_agen_redis + "_" + strings.ToLower(idcompany) + "_" + strconv.Itoa(i) + "_"
-				val_result := helpers.DeleteRedis(key_redis_ageninvoice)
-				fmt.Printf("Redis Delete AGEN INVOICE : %d - %s \n", val_result, key_redis_ageninvoice)
-			}
-
-			// key_redis_detail := "LISTINVOICE_2D30S_AGEN_nuke_DETAIL_240312231346_WIN"
-			key_redis_detail_win := invoice_agen_redis + "_" + strings.ToLower(idcompany) + "_DETAIL_" + idrecord + "_WIN"
-			key_redis_detail_lose := invoice_agen_redis + "_" + strings.ToLower(idcompany) + "_DETAIL_" + idrecord + "_LOSE"
-			key_redis_detail_running := invoice_agen_redis + "_" + strings.ToLower(idcompany) + "_DETAIL_" + idrecord + "_RUNNING"
-			val_detail_win := helpers.DeleteRedis(key_redis_detail_win)
-			val_detail_lose := helpers.DeleteRedis(key_redis_detail_lose)
-			val_detail_running := helpers.DeleteRedis(key_redis_detail_running)
-			fmt.Println("")
-			fmt.Printf("Redis Delete DETAIL WIN : %d\n", val_detail_win)
-			fmt.Printf("Redis Delete DETAIL LOSE : %d\n", val_detail_lose)
-			fmt.Printf("Redis Delete DETAIL RUNNIN : %d\n", val_detail_running)
-			fmt.Println("")
+			data_send_savetransaksi := ""
+			fmt.Println("Send Data ke engine save transaksi")
+			data_send_savetransaksi = idrecord + "|" + result + "|" + idcompany
+			fmt.Printf("%s\n", data_send_savetransaksi)
+			_senddata_enginesave(data_send_savetransaksi, idcompany)
 
 			idcurr := _GetCompanyInfo(idcompany)
 			invoice := _Generate_incoive(strings.ToLower(idcompany), idcurr)
@@ -588,48 +497,6 @@ func _GetCompanyConfInfo(idcompany string) int {
 
 	return conf_2digit_30_time
 }
-func _GetTotalBetWin_Transaksi(table, idtransaksi string) (int, int) {
-	con := db.CreateCon()
-	ctx := context.Background()
-	total_bet := 0
-	total_win := 0
-	sql_select := ""
-	sql_select += "SELECT "
-	sql_select += "SUM(bet) AS total_bet, SUM(win) AS total_win  "
-	sql_select += "FROM " + table + " "
-	sql_select += "WHERE idtransaksi='" + idtransaksi + "'   "
-	sql_select += "AND status_transaksidetail !='RUNNING'   "
-
-	row := con.QueryRowContext(ctx, sql_select)
-	switch e := row.Scan(&total_bet, &total_win); e {
-	case sql.ErrNoRows:
-	case nil:
-	default:
-		helpers.ErrorCheck(e)
-	}
-
-	return total_bet, total_win
-}
-func _GetTotalMember_Transaksi(table, idtransaksi string) int {
-	con := db.CreateCon()
-	ctx := context.Background()
-	total_member := 0
-	sql_select := ""
-	sql_select += "SELECT "
-	sql_select += "COUNT(distinct(username_client)) AS total_member  "
-	sql_select += "FROM " + table + " "
-	sql_select += "WHERE idtransaksi='" + idtransaksi + "'   "
-
-	row := con.QueryRowContext(ctx, sql_select)
-	switch e := row.Scan(&total_member); e {
-	case sql.ErrNoRows:
-	case nil:
-	default:
-		helpers.ErrorCheck(e)
-	}
-
-	return total_member
-}
 
 func _GetTotalBetWinByDate_Transaksi(table, startdate, enddate string) (int, int) {
 	con := db.CreateCon()
@@ -771,4 +638,9 @@ func _line(nomorkeluaran string) string {
 		}
 	}
 	return result
+}
+
+func _senddata_enginesave(data, company string) {
+	key := "payload" + "_enginesave_" + strings.ToLower(company)
+	helpers.SetPublish(key, data)
 }

@@ -174,7 +174,11 @@ func Transaksi2D30Sdetail(c *fiber.Ctx) error {
 	_, client_company, _ := helpers.Parsing_Decry(temp_decp, "==")
 
 	fieldredis := ""
-	fieldredis = Fieldtransaksi2d30s_home_redis + "_" + strings.ToLower(client_company) + "_DETAIL_" + client.Transaksidetail2D30S_invoice + "_" + client.Transaksidetail2D30S_status
+	if client.Transaksidetail2D30S_invoice != "" {
+		fieldredis = Fieldtransaksi2d30s_home_redis + "_" + strings.ToLower(client_company) + "_DETAIL_" + client.Transaksidetail2D30S_invoice + "_" + client.Transaksidetail2D30S_status
+	} else {
+		fieldredis = Fieldtransaksi2d30s_home_redis + "_" + strings.ToLower(client_company) + "_DETAIL_" + client.Transaksidetail2D30S_status
+	}
 
 	var obj entities.Model_transaksi2D30Sdetail
 	var arraobj []entities.Model_transaksi2D30Sdetail
