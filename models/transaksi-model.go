@@ -349,10 +349,12 @@ func Save_updateresult2D30S(admin, idrecord, idcompany, result string) (helpers.
 			type Configure struct {
 				Time    int    `json:"time"`
 				Invoice string `json:"invoice"`
+				Result  string `json:"result"`
 			}
 			var obj Configure
 			obj.Time = _GetCompanyConfInfo(idcompany)
 			obj.Invoice = invoice
+			obj.Result = result
 			helpers.SetRedis(fieldconfig_redis, obj, 5*time.Minute)
 		} else {
 			fmt.Println(msg_update)
