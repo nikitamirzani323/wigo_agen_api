@@ -137,7 +137,7 @@ func Save_adminHome(admin, idcompany, username, password, nama, status, sData st
 			`
 			createdate := tglnow.Format("YYYY-MM-DD HH:mm:ss")
 			hashpass := helpers.HashPasswordMD5(password)
-			field_column := database_companyadmin_local + strings.ToLower(idcompany) + tglnow.Format("YYYY")
+			field_column := configs.DB_tbl_mst_company_admin + strings.ToLower(idcompany) + tglnow.Format("YYYY")
 			idrecord_counter := Get_counter(field_column)
 			idrecord := tglnow.Format("YY") + strconv.Itoa(idrecord_counter)
 			flag_insert, msg_insert := Exec_SQL(sql_insert, database_admin_local, "INSERT",
@@ -206,7 +206,7 @@ func _Get_adminrule(idrule int, idcompany string) string {
 	nmruleadmin := ""
 	sql_select := `SELECT
 			nmruleadmin    
-			FROM ` + database_companyadminrule_local + `  
+			FROM ` + configs.DB_tbl_mst_company_adminrule + `  
 			WHERE idcompadminrule='` + strconv.Itoa(idrule) + `'       
 			AND idcompany='` + idcompany + `'       
 		`

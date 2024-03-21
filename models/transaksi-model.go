@@ -409,6 +409,55 @@ func Fetch_transaksi2D30SPrediksi(idcompany, idinvoice, result string) (helpers.
 
 	return res, nil
 }
+func Fetch_Agenconf(idcompany string) (helpers.Response, error) {
+	var obj entities.Model_agenconf
+	var arraobj []entities.Model_agenconf
+	var res helpers.Response
+	msg := "Data Not Found"
+	con := db.CreateCon()
+	ctx := context.Background()
+	start := time.Now()
+
+	sql_select := ""
+	sql_select += "SELECT "
+	sql_select += "conf_2digit_30_time, "
+	sql_select += "conf_2digit_30_win,conf_2digit_30_win_redblack,conf_2digit_30_win_line,   "
+	sql_select += "conf_2digit_30_operator  "
+	sql_select += "FROM " + configs.DB_tbl_mst_company_config + " "
+	sql_select += "WHERE idcompany ='" + idcompany + "' "
+	fmt.Println(sql_select)
+	row, err := con.QueryContext(ctx, sql_select)
+	helpers.ErrorCheck(err)
+	for row.Next() {
+		var (
+			conf_2digit_30_time_db                                                            int
+			conf_2digit_30_win_db, conf_2digit_30_win_redblack_db, conf_2digit_30_win_line_db float64
+			conf_2digit_30_operator_db                                                        string
+		)
+
+		err = row.Scan(&conf_2digit_30_time_db, &conf_2digit_30_win_db,
+			&conf_2digit_30_win_redblack_db, &conf_2digit_30_win_line_db,
+			&conf_2digit_30_operator_db)
+
+		helpers.ErrorCheck(err)
+
+		obj.Agenconf_2digit_30_time = conf_2digit_30_time_db
+		obj.Agenconf_2digit_30_winangka = conf_2digit_30_win_db
+		obj.Agenconf_2digit_30_winredblack = conf_2digit_30_win_redblack_db
+		obj.Agenconf_2digit_30_winline = conf_2digit_30_win_line_db
+		obj.Agenconf_2digit_30_operator = conf_2digit_30_operator_db
+		arraobj = append(arraobj, obj)
+		msg = "Success"
+	}
+	defer row.Close()
+
+	res.Status = fiber.StatusOK
+	res.Message = msg
+	res.Record = arraobj
+	res.Time = time.Since(start).String()
+
+	return res, nil
+}
 func Save_updateresult2D30S(admin, idrecord, idcompany, result string) (helpers.Response, error) {
 	var res helpers.Response
 	msg := "Failed"
@@ -457,6 +506,37 @@ func Save_updateresult2D30S(admin, idrecord, idcompany, result string) (helpers.
 		} else {
 			fmt.Println(msg_update)
 		}
+	}
+
+	res.Status = fiber.StatusOK
+	res.Message = msg
+	res.Record = nil
+	res.Time = time.Since(render_page).String()
+
+	return res, nil
+}
+func Save_Agenconf(admin, idcompany, operator_2D30 string) (helpers.Response, error) {
+	var res helpers.Response
+	msg := "Failed"
+	tglnow, _ := goment.New()
+	render_page := time.Now()
+
+	sql_update := `
+				UPDATE 
+				` + configs.DB_tbl_mst_company_config + `  
+				SET conf_2digit_30_operator=$1, 
+				updateconf=$2, updatedateconf=$3      
+				WHERE idcompany=$4   
+			`
+
+	flag_update, msg_update := Exec_SQL(sql_update, configs.DB_tbl_mst_company_config, "UPDATE",
+		operator_2D30,
+		admin, tglnow.Format("YYYY-MM-DD HH:mm:ss"), idcompany)
+
+	if flag_update {
+		msg = "Succes"
+	} else {
+		fmt.Println(msg_update)
 	}
 
 	res.Status = fiber.StatusOK

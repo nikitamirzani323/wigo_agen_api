@@ -79,7 +79,7 @@ func Save_adminrule(admin, idcompany, name, rule, sData string, idrecord int) (h
 					$4,$5
 				) 
 			`
-		field_column := database_companyadminrule_local + strings.ToLower(idcompany) + tglnow.Format("YYYY")
+		field_column := configs.DB_tbl_mst_company_adminrule + strings.ToLower(idcompany) + tglnow.Format("YYYY")
 		idrecord_counter := Get_counter(field_column)
 		idrecord := tglnow.Format("YY") + strconv.Itoa(idrecord_counter)
 		flag_insert, msg_insert := Exec_SQL(sql_insert, database_adminrule_local, "INSERT",

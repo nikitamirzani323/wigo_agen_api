@@ -58,10 +58,21 @@ type Model_transaksi2D30SPrediksi struct {
 	Transaksi2D30Sprediksi_status     string  `json:"transaksi2D30sprediksi_status"`
 	Transaksi2D30Sprediksi_status_css string  `json:"transaksi2D30sprediksi_status_css"`
 }
+type Model_agenconf struct {
+	Agenconf_2digit_30_time        int     `json:"agenconf_2digit_30_time"`
+	Agenconf_2digit_30_winangka    float64 `json:"agenconf_2digit_30_winangka"`
+	Agenconf_2digit_30_winredblack float64 `json:"agenconf_2digit_30_winredblack"`
+	Agenconf_2digit_30_winline     float64 `json:"agenconf_2digit_30_winline"`
+	Agenconf_2digit_30_operator    string  `json:"agenconf_2digit_30_operator"`
+}
 type Controller_transaksi2D30Ssave struct {
 	Page                   string `json:"page" validate:"required"`
 	Transaksi2D30S_invoice string `json:"transaksi2D30s_invoice" validate:"required"`
 	Transaksi2D30S_result  string `json:"transaksi2D30s_result" validate:"required"`
+}
+type Controller_agenconfsave struct {
+	Page                        string `json:"page" validate:"required"`
+	Agenconf_2digit_30_operator string `json:"agenconf_2digit_30_operator" validate:"required"`
 }
 type Controller_transaksi2D30S struct {
 	Transaksi2D30S_search  string `json:"transaksi2D30s_search"`

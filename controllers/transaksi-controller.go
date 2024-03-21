@@ -16,6 +16,7 @@ import (
 )
 
 const Fieldtransaksi2d30s_home_redis = "LISTINVOICE_2D30S_AGEN"
+const Fieldconf_home_redis = "12D30S_AGEN"
 
 func Transaksi2D30Shome(c *fiber.Ctx) error {
 	var errors []*helpers.ErrorResponse
@@ -446,7 +447,57 @@ func Transaksi2D30Sprediksi(c *fiber.Ctx) error {
 		})
 	}
 }
+func AgenConf(c *fiber.Ctx) error {
+	user := c.Locals("jwt").(*jwt.Token)
+	claims := user.Claims.(jwt.MapClaims)
+	name := claims["name"].(string)
+	temp_decp := helpers.Decryption(name)
+	_, client_company, _ := helpers.Parsing_Decry(temp_decp, "==")
 
+	var obj entities.Model_agenconf
+	var arraobj []entities.Model_agenconf
+	render_page := time.Now()
+	resultredis, flag := helpers.GetRedis(Fieldconf_home_redis + "_" + strings.ToLower(client_company))
+	jsonredis := []byte(resultredis)
+	record_RD, _, _, _ := jsonparser.Get(jsonredis, "record")
+	jsonparser.ArrayEach(record_RD, func(value []byte, dataType jsonparser.ValueType, offset int, err error) {
+		agenconf_2digit_30_time, _ := jsonparser.GetInt(value, "agenconf_2digit_30_time")
+		agenconf_2digit_30_winangka, _ := jsonparser.GetFloat(value, "agenconf_2digit_30_winangka")
+		agenconf_2digit_30_winredblack, _ := jsonparser.GetFloat(value, "agenconf_2digit_30_winredblack")
+		agenconf_2digit_30_winline, _ := jsonparser.GetFloat(value, "agenconf_2digit_30_winline")
+		agenconf_2digit_30_operator, _ := jsonparser.GetString(value, "agenconf_2digit_30_operator")
+
+		obj.Agenconf_2digit_30_time = int(agenconf_2digit_30_time)
+		obj.Agenconf_2digit_30_winangka = float64(agenconf_2digit_30_winangka)
+		obj.Agenconf_2digit_30_winredblack = float64(agenconf_2digit_30_winredblack)
+		obj.Agenconf_2digit_30_winline = float64(agenconf_2digit_30_winline)
+		obj.Agenconf_2digit_30_operator = agenconf_2digit_30_operator
+		arraobj = append(arraobj, obj)
+	})
+
+	if !flag {
+		result, err := models.Fetch_Agenconf(client_company)
+		if err != nil {
+			c.Status(fiber.StatusBadRequest)
+			return c.JSON(fiber.Map{
+				"status":  fiber.StatusBadRequest,
+				"message": err.Error(),
+				"record":  nil,
+			})
+		}
+		helpers.SetRedis(Fieldconf_home_redis+"_"+strings.ToLower(client_company), result, 60*time.Minute)
+		fmt.Println("TRANSAKSI 2D30S PREDIKSI DATABASE")
+		return c.JSON(result)
+	} else {
+		fmt.Println("TRANSAKSI 2D30S PREDIKSI CACHE")
+		return c.JSON(fiber.Map{
+			"status":  fiber.StatusOK,
+			"message": "Success",
+			"record":  arraobj,
+			"time":    time.Since(render_page).String(),
+		})
+	}
+}
 func Transaksi2D30SSave(c *fiber.Ctx) error {
 	var errors []*helpers.ErrorResponse
 	client := new(entities.Controller_transaksi2D30Ssave)
@@ -497,10 +548,64 @@ func Transaksi2D30SSave(c *fiber.Ctx) error {
 	_deleteredis_transaksi(client.Transaksi2D30S_invoice, client_company)
 	return c.JSON(result)
 }
+func AgenConfSave(c *fiber.Ctx) error {
+	var errors []*helpers.ErrorResponse
+	client := new(entities.Controller_agenconfsave)
+	validate := validator.New()
+	if err := c.BodyParser(client); err != nil {
+		c.Status(fiber.StatusBadRequest)
+		return c.JSON(fiber.Map{
+			"status":  fiber.StatusBadRequest,
+			"message": err.Error(),
+			"record":  nil,
+		})
+	}
+
+	err := validate.Struct(client)
+	if err != nil {
+		for _, err := range err.(validator.ValidationErrors) {
+			var element helpers.ErrorResponse
+			element.Field = err.StructField()
+			element.Tag = err.Tag()
+			errors = append(errors, &element)
+		}
+		c.Status(fiber.StatusBadRequest)
+		return c.JSON(fiber.Map{
+			"status":  fiber.StatusBadRequest,
+			"message": "validation",
+			"record":  errors,
+		})
+	}
+	user := c.Locals("jwt").(*jwt.Token)
+	claims := user.Claims.(jwt.MapClaims)
+	name := claims["name"].(string)
+	temp_decp := helpers.Decryption(name)
+	client_admin, client_company, _ := helpers.Parsing_Decry(temp_decp, "==")
+
+	// admin, idcompany, operator_2D30 string
+	result, err := models.Save_Agenconf(
+		client_admin,
+		client_company, client.Agenconf_2digit_30_operator)
+	if err != nil {
+		c.Status(fiber.StatusBadRequest)
+		return c.JSON(fiber.Map{
+			"status":  fiber.StatusBadRequest,
+			"message": err.Error(),
+			"record":  nil,
+		})
+	}
+
+	_deleteredis_transaksi("", client_company)
+	return c.JSON(result)
+}
 
 func _deleteredis_transaksi(idinvoice, idcompany string) {
 	val_transaksi2d30s := helpers.DeleteRedis(Fieldtransaksi2d30s_home_redis + "_" + strings.ToLower(idcompany))
-	fmt.Printf("Redis Delete AGEN TRANSAKSI2D30S INVOICE : %d", val_transaksi2d30s)
+	fmt.Printf("Redis Delete AGEN TRANSAKSI2D30S INVOICE : %d\n", val_transaksi2d30s)
 	val_transaksi2d30s2 := helpers.DeleteRedis(Fieldtransaksi2d30s_home_redis + "_" + strings.ToLower(idcompany) + "_" + idinvoice)
-	fmt.Printf("Redis Delete AGEN TRANSAKSI2D30S INVOICE : %d", val_transaksi2d30s2)
+	fmt.Printf("Redis Delete AGEN TRANSAKSI2D30S INVOICE : %d\n", val_transaksi2d30s2)
+	val_confagen := helpers.DeleteRedis(Fieldconf_home_redis + "_" + strings.ToLower(idcompany))
+	fmt.Printf("Redis Delete AGEN CONF : %d\n", val_confagen)
+	val_master_confagen := helpers.DeleteRedis("LISTCOMPANYCONF_BACKEND_" + strings.ToLower(idcompany))
+	fmt.Printf("Redis Delete MASTER AGEN CONF : %d\n", val_master_confagen)
 }
