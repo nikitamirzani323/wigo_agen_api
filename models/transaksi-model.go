@@ -539,6 +539,10 @@ func Save_Agenconf(admin, idcompany, operator_2D30 string) (helpers.Response, er
 		fmt.Println(msg_update)
 	}
 
+	//==DELETE REDIS TIMER
+	val_timer := helpers.DeleteRedis("CONFIG" + "_" + strings.ToLower(idcompany))
+	fmt.Printf("Redis Delete BACKEND TIMER CONFIG : %d\n", val_timer)
+
 	res.Status = fiber.StatusOK
 	res.Message = msg
 	res.Record = nil
