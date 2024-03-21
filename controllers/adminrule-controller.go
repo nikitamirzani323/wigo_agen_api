@@ -5,13 +5,13 @@ import (
 	"strings"
 	"time"
 
+	"bitbucket.org/isbtotogroup/wigo_agen_api/entities"
+	"bitbucket.org/isbtotogroup/wigo_agen_api/helpers"
+	"bitbucket.org/isbtotogroup/wigo_agen_api/models"
 	"github.com/buger/jsonparser"
 	"github.com/go-playground/validator/v10"
 	"github.com/gofiber/fiber/v2"
 	"github.com/golang-jwt/jwt/v4"
-	"github.com/nikitamirzani323/WIGO_AGEN_API/entities"
-	"github.com/nikitamirzani323/WIGO_AGEN_API/helpers"
-	"github.com/nikitamirzani323/WIGO_AGEN_API/models"
 )
 
 const Fieldadminrule_home_redis = "LISTRULE_AGEN"

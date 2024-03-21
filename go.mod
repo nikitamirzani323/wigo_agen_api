@@ -1,4 +1,4 @@
-module github.com/nikitamirzani323/WIGO_AGEN_API
+module bitbucket.org/isbtotogroup/wigo_agen_api
 
 go 1.17
 

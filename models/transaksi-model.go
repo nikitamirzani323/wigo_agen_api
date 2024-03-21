@@ -9,11 +9,11 @@ import (
 	"strings"
 	"time"
 
+	"bitbucket.org/isbtotogroup/wigo_agen_api/configs"
+	"bitbucket.org/isbtotogroup/wigo_agen_api/db"
+	"bitbucket.org/isbtotogroup/wigo_agen_api/entities"
+	"bitbucket.org/isbtotogroup/wigo_agen_api/helpers"
 	"github.com/gofiber/fiber/v2"
-	"github.com/nikitamirzani323/WIGO_AGEN_API/configs"
-	"github.com/nikitamirzani323/WIGO_AGEN_API/db"
-	"github.com/nikitamirzani323/WIGO_AGEN_API/entities"
-	"github.com/nikitamirzani323/WIGO_AGEN_API/helpers"
 	"github.com/nleeper/goment"
 )
 

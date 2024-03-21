@@ -7,9 +7,9 @@ import (
 	"os"
 	"time"
 
+	"bitbucket.org/isbtotogroup/wigo_agen_api/helpers"
 	_ "github.com/jinzhu/gorm/dialects/mysql"
 	_ "github.com/jinzhu/gorm/dialects/postgres"
-	"github.com/nikitamirzani323/WIGO_AGEN_API/helpers"
 )
 
 var db *sql.DB

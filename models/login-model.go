@@ -6,9 +6,9 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/nikitamirzani323/WIGO_AGEN_API/configs"
-	"github.com/nikitamirzani323/WIGO_AGEN_API/db"
-	"github.com/nikitamirzani323/WIGO_AGEN_API/helpers"
+	"bitbucket.org/isbtotogroup/wigo_agen_api/configs"
+	"bitbucket.org/isbtotogroup/wigo_agen_api/db"
+	"bitbucket.org/isbtotogroup/wigo_agen_api/helpers"
 	"github.com/nleeper/goment"
 )
 
