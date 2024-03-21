@@ -127,14 +127,19 @@ func Fetch_transaksi2D30SHome(idcompany, idinvoice, search string, page int) (he
 	}
 	defer row.Close()
 
-	total_bet, total_win := _GetTotalBetWinByDate_Transaksi(tbl_trx_transaksi, startdate, enddate)
+	total_bet := 0
+	total_win := 0
 	var winlose_agen float64 = 0
 	var winlose_member float64 = 0
-	winlose_agen = float64(total_bet - total_win)
-	if winlose_agen < 0 {
-		winlose_member = math.Abs(winlose_agen)
-	} else {
-		winlose_member = -winlose_agen
+	if idinvoice == "" {
+		total_bet, total_win = _GetTotalBetWinByDate_Transaksi(tbl_trx_transaksi, startdate, enddate)
+
+		winlose_agen = float64(total_bet - total_win)
+		if winlose_agen < 0 {
+			winlose_member = math.Abs(winlose_agen)
+		} else {
+			winlose_member = -winlose_agen
+		}
 	}
 
 	res.Status = fiber.StatusOK
@@ -147,6 +152,90 @@ func Fetch_transaksi2D30SHome(idcompany, idinvoice, search string, page int) (he
 	res.TotalWin = total_win
 	res.Winlose_agen = int(winlose_agen)
 	res.Winlose_member = int(winlose_member)
+	res.Time = time.Since(start).String()
+
+	return res, nil
+}
+func Fetch_transaksi2D30SInfo(idcompany, idinvoice string) (helpers.ResponseTransaksi2D30SInfo, error) {
+	var obj entities.Model_transaksi2D30SInfoInvoice
+	var arraobj []entities.Model_transaksi2D30SInfoInvoice
+	var res helpers.ResponseTransaksi2D30SInfo
+	msg := "Data Not Found"
+	con := db.CreateCon()
+	ctx := context.Background()
+	start := time.Now()
+
+	_, tbl_trx_transaksi, tbl_trx_transaksidetail := Get_mappingdatabase(idcompany)
+
+	sql_select := ""
+	sql_select += "SELECT "
+	sql_select += "idtransaksi,  "
+	sql_select += "resultwigo,total_member,total_bet,total_win,status_transaksi "
+	sql_select += "FROM " + tbl_trx_transaksi + "   "
+	sql_select += "WHERE LOWER(idcompany)='" + strings.ToLower(idcompany) + "' "
+	sql_select += "AND idtransaksi='" + idinvoice + "' "
+
+	row, err := con.QueryContext(ctx, sql_select)
+	helpers.ErrorCheck(err)
+	for row.Next() {
+		var (
+			idtransaksi_db, resultwigo_db, status_transaksi_db string
+			total_member_db, total_bet_db, total_win_db        int
+		)
+
+		err = row.Scan(&idtransaksi_db, &resultwigo_db, &total_member_db, &total_bet_db, &total_win_db, &status_transaksi_db)
+
+		helpers.ErrorCheck(err)
+
+		obj.Transaksi2D30Sinfo_id = idtransaksi_db
+		obj.Transaksi2D30Sinfo_result = resultwigo_db
+		obj.Transaksi2D30Sinfo_totalmember = total_member_db
+		obj.Transaksi2D30Sinfo_totalbet = total_bet_db
+		obj.Transaksi2D30Sinfo_totalwin = total_win_db
+		obj.Transaksi2D30Sinfo_winlose = total_bet_db - total_win_db
+		obj.Transaksi2D30Sinfo_status = status_transaksi_db
+		arraobj = append(arraobj, obj)
+		msg = "Success"
+	}
+	defer row.Close()
+
+	var objdetail entities.Model_transaksi2D30Ssummary
+	var arraobjdetail []entities.Model_transaksi2D30Ssummary
+
+	sql_selectdetail := ""
+	sql_selectdetail += "SELECT "
+	sql_selectdetail += "nomor, count(idtransaksidetail) as totalinvoice,  "
+	sql_selectdetail += "sum(bet) as totalbet, sum(bet+(bet*multiplier)) as totalwin  "
+	sql_selectdetail += "FROM " + tbl_trx_transaksidetail + "   "
+	sql_selectdetail += "WHERE idtransaksi='" + idinvoice + "' "
+	sql_selectdetail += "group by nomor  "
+	sql_selectdetail += "order by totalwin desc  "
+
+	row_detail, err_detail := con.QueryContext(ctx, sql_selectdetail)
+	helpers.ErrorCheck(err_detail)
+	for row_detail.Next() {
+		var (
+			nomor_db                                  string
+			totalinvoice_db, totalbet_db, totalwin_db int
+		)
+
+		err = row_detail.Scan(&nomor_db, &totalinvoice_db, &totalbet_db, &totalwin_db)
+
+		helpers.ErrorCheck(err)
+
+		objdetail.Transaksi2D30Ssummary_nomor = nomor_db
+		objdetail.Transaksi2D30Ssummary_totalinvoice = totalinvoice_db
+		objdetail.Transaksi2D30Ssummary_totalbet = totalbet_db
+		objdetail.Transaksi2D30Ssummary_totalwin = totalwin_db
+		arraobjdetail = append(arraobjdetail, objdetail)
+		msg = "Success"
+	}
+	defer row_detail.Close()
+
+	res.Status = fiber.StatusOK
+	res.Message = msg
+	res.Record = arraobj
+	res.Summary = arraobjdetail
 	res.Time = time.Since(start).String()
 
 	return res, nil
@@ -249,13 +338,15 @@ func Fetch_transaksi2D30SPrediksi(idcompany, idinvoice, result string) (helpers.
 
 	total_bet := 0
 	total_win := 0
-	winlose := 0
+	var winlose_agen float64 = 0
+	var winlose_member float64 = 0
 	sql_select_detail := `SELECT 
 					idtransaksidetail , nomor, tipebet, bet, multiplier, username_client,
 					to_char(COALESCE(createdate_transaksidetail,now()), 'YYYY-MM-DD HH24:MI:SS') 
 					FROM ` + tbl_trx_transaksidetail + `  
 					WHERE status_transaksidetail='RUNNING'  
-					AND idtransaksi='` + idinvoice + `'  `
+					AND idtransaksi='` + idinvoice + `'  
+					`
 
 	row, err := con.QueryContext(ctx, sql_select_detail)
 	helpers.ErrorCheck(err)
@@ -269,13 +360,12 @@ func Fetch_transaksi2D30SPrediksi(idcompany, idinvoice, result string) (helpers.
 		err = row.Scan(&idtransaksidetail_db, &nomor_db, &tipebet_db, &bet_db,
 			&multiplier_db, &username_client_db, &createdate_transaksidetail_db)
 		helpers.ErrorCheck(err)
-
 		total_bet = total_bet + bet_db
-
 		status_client := _rumuswigo2D30S(tipebet_db, nomor_db, result)
 
 		win := 0
 		if status_client == "WIN" {
+
 			win = bet_db + int(float64(bet_db)*multiplier_db)
 			total_win = total_win + win
 
@@ -288,25 +378,33 @@ func Fetch_transaksi2D30SPrediksi(idcompany, idinvoice, result string) (helpers.
 			obj.Transaksi2D30Sprediksi_username = username_client_db
 			obj.Transaksi2D30Sprediksi_nomor = nomor_db
 			obj.Transaksi2D30Sprediksi_bet = bet_db
+			obj.Transaksi2D30Sprediksi_multiplier = multiplier_db
 			obj.Transaksi2D30Sprediksi_win = win
 			obj.Transaksi2D30Sprediksi_winlose = bet_db - win
 			obj.Transaksi2D30Sprediksi_status = status_client
 			obj.Transaksi2D30Sprediksi_status_css = status_css
 			arraobj = append(arraobj, obj)
 		}
-		total_bet = total_bet + bet_db
 
 	}
 	defer row.Close()
-	winlose = total_bet - total_win
+
+	winlose_agen = float64(total_bet - total_win)
+	if winlose_agen < 0 {
+		winlose_member = math.Abs(winlose_agen)
+	} else {
+		winlose_member = -winlose_agen
+	}
+	_, _, total_member := _GetInvoiceInfo(idinvoice, idcompany)
 
 	res.Status = fiber.StatusOK
 	res.Message = msg
 	res.Record = arraobj
-	res.TotalMember = 0
+	res.TotalMember = total_member
 	res.Totalbet = total_bet
 	res.Totalwin = total_win
-	res.Winlose = winlose
+	res.Winlose_agen = int(winlose_agen)
+	res.Winlose_member = int(winlose_member)
 	res.Time = time.Since(start).String()
 
 	return res, nil
@@ -319,7 +417,7 @@ func Save_updateresult2D30S(admin, idrecord, idcompany, result string) (helpers.
 
 	_, tbl_trx_transaksi, _ := Get_mappingdatabase(idcompany)
 
-	result_db, status_db := _GetInvoiceInfo(idrecord, idcompany)
+	result_db, status_db, _ := _GetInvoiceInfo(idrecord, idcompany)
 	if result_db == "" && status_db == "OPEN" {
 		sql_update := `
 			UPDATE 
@@ -430,7 +528,7 @@ func _GetInvoice(idcompany string) string {
 
 	return idtransaksi
 }
-func _GetInvoiceInfo(invoice, idcompany string) (string, string) {
+func _GetInvoiceInfo(invoice, idcompany string) (string, string, int) {
 	con := db.CreateCon()
 	ctx := context.Background()
 
@@ -438,23 +536,25 @@ func _GetInvoiceInfo(invoice, idcompany string) (string, string) {
 
 	result := ""
 	status := ""
+	total_member := 0
 
 	sql_select := ""
 	sql_select += "SELECT "
-	sql_select += "resultwigo, status_transaksi "
+	sql_select += "resultwigo, status_transaksi, total_member "
 	sql_select += "FROM " + tbl_trx_transaksi + " "
 	sql_select += "WHERE idtransaksi='" + invoice + "' "
 
 	row := con.QueryRowContext(ctx, sql_select)
-	switch e := row.Scan(&result, &status); e {
+	switch e := row.Scan(&result, &status, &total_member); e {
 	case sql.ErrNoRows:
 	case nil:
 	default:
 		helpers.ErrorCheck(e)
 	}
 
-	return result, status
+	return result, status, total_member
 }
+
 func _GetCompanyInfo(idcompany string) string {
 	con := db.CreateCon()
 	ctx := context.Background()

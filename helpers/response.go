@@ -27,15 +27,23 @@ type ResponseTransaksi2D30S struct {
 	Periode        string      `json:"periode"`
 	Time           string      `json:"time"`
 }
+type ResponseTransaksi2D30SInfo struct {
+	Status  int         `json:"status"`
+	Message string      `json:"message"`
+	Record  interface{} `json:"record"`
+	Summary interface{} `json:"summary"`
+	Time    string      `json:"time"`
+}
 type ResponseTransaksi2D30SPrediksi struct {
-	Status      int         `json:"status"`
-	Message     string      `json:"message"`
-	Record      interface{} `json:"record"`
-	TotalMember int         `json:"totalmember"`
-	Totalbet    int         `json:"totalbet"`
-	Totalwin    int         `json:"totalwin"`
-	Winlose     int         `json:"winlose"`
-	Time        string      `json:"time"`
+	Status         int         `json:"status"`
+	Message        string      `json:"message"`
+	Record         interface{} `json:"record"`
+	TotalMember    int         `json:"totalmember"`
+	Totalbet       int         `json:"totalbet"`
+	Totalwin       int         `json:"totalwin"`
+	Winlose_agen   int         `json:"winlose_agen"`
+	Winlose_member int         `json:"winlose_member"`
+	Time           string      `json:"time"`
 }
 type Responsercompany struct {
 	Status      int         `json:"status"`

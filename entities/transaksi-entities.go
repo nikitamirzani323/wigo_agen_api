@@ -14,6 +14,21 @@ type Model_transaksi2D30S struct {
 	Transaksi2D30S_create      string `json:"transaksi2D30s_create"`
 	Transaksi2D30S_update      string `json:"transaksi2D30s_update"`
 }
+type Model_transaksi2D30SInfoInvoice struct {
+	Transaksi2D30Sinfo_id          string `json:"transaksi2D30sinfo_id"`
+	Transaksi2D30Sinfo_result      string `json:"transaksi2D30sinfo_result"`
+	Transaksi2D30Sinfo_totalmember int    `json:"transaksi2D30sinfo_totalmember"`
+	Transaksi2D30Sinfo_totalbet    int    `json:"transaksi2D30sinfo_totalbet"`
+	Transaksi2D30Sinfo_totalwin    int    `json:"transaksi2D30sinfo_totalwin"`
+	Transaksi2D30Sinfo_winlose     int    `json:"transaksi2D30sinfo_winlose"`
+	Transaksi2D30Sinfo_status      string `json:"transaksi2D30sinfo_status"`
+}
+type Model_transaksi2D30Ssummary struct {
+	Transaksi2D30Ssummary_nomor        string `json:"transaksi2D30ssummary_nomor"`
+	Transaksi2D30Ssummary_totalinvoice int    `json:"transaksi2D30ssummary_totalinvoice"`
+	Transaksi2D30Ssummary_totalbet     int    `json:"transaksi2D30ssummary_totalbet"`
+	Transaksi2D30Ssummary_totalwin     int    `json:"transaksi2D30ssummary_totalwin"`
+}
 type Model_transaksi2D30Sdetail struct {
 	Transaksi2D30Sdetail_id         string  `json:"transaksi2D30sdetail_id"`
 	Transaksi2D30Sdetail_date       string  `json:"transaksi2D30sdetail_date"`
@@ -32,15 +47,16 @@ type Model_transaksi2D30Sdetail struct {
 	Transaksi2D30Sdetail_update     string  `json:"transaksi2D30sdetail_update"`
 }
 type Model_transaksi2D30SPrediksi struct {
-	Transaksi2D30Sprediksi_id         string `json:"transaksi2D30sprediksi_id"`
-	Transaksi2D30Sprediksi_username   string `json:"transaksi2D30sprediksi_username"`
-	Transaksi2D30Sprediksi_date       string `json:"transaksi2D30sprediksi_date"`
-	Transaksi2D30Sprediksi_nomor      string `json:"transaksi2D30sprediksi_nomor"`
-	Transaksi2D30Sprediksi_bet        int    `json:"transaksi2D30sprediksi_bet"`
-	Transaksi2D30Sprediksi_win        int    `json:"transaksi2D30sprediksi_win"`
-	Transaksi2D30Sprediksi_winlose    int    `json:"transaksi2D30sprediksi_winlose"`
-	Transaksi2D30Sprediksi_status     string `json:"transaksi2D30sprediksi_status"`
-	Transaksi2D30Sprediksi_status_css string `json:"transaksi2D30sprediksi_status_css"`
+	Transaksi2D30Sprediksi_id         string  `json:"transaksi2D30sprediksi_id"`
+	Transaksi2D30Sprediksi_username   string  `json:"transaksi2D30sprediksi_username"`
+	Transaksi2D30Sprediksi_date       string  `json:"transaksi2D30sprediksi_date"`
+	Transaksi2D30Sprediksi_nomor      string  `json:"transaksi2D30sprediksi_nomor"`
+	Transaksi2D30Sprediksi_bet        int     `json:"transaksi2D30sprediksi_bet"`
+	Transaksi2D30Sprediksi_multiplier float64 `json:"transaksi2D30sprediksi_multiplier"`
+	Transaksi2D30Sprediksi_win        int     `json:"transaksi2D30sprediksi_win"`
+	Transaksi2D30Sprediksi_winlose    int     `json:"transaksi2D30sprediksi_winlose"`
+	Transaksi2D30Sprediksi_status     string  `json:"transaksi2D30sprediksi_status"`
+	Transaksi2D30Sprediksi_status_css string  `json:"transaksi2D30sprediksi_status_css"`
 }
 type Controller_transaksi2D30Ssave struct {
 	Page                   string `json:"page" validate:"required"`
@@ -50,6 +66,9 @@ type Controller_transaksi2D30Ssave struct {
 type Controller_transaksi2D30S struct {
 	Transaksi2D30S_search  string `json:"transaksi2D30s_search"`
 	Transaksi2D30S_page    int    `json:"transaksi2D30s_page"`
+	Transaksi2D30S_invoice string `json:"transaksi2D30s_invoice"`
+}
+type Controller_transaksi2D30Sinfo struct {
 	Transaksi2D30S_invoice string `json:"transaksi2D30s_invoice"`
 }
 type Controller_prediksitransaksi2D30S struct {
