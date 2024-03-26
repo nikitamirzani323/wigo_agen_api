@@ -14,7 +14,7 @@ import (
 	"github.com/golang-jwt/jwt/v4"
 )
 
-const Fieldadminrule_home_redis = "LISTRULE_AGEN"
+const Fieldadminrule_home_redis = "AGEN:LISTRULE"
 
 func Adminrulehome(c *fiber.Ctx) error {
 	user := c.Locals("jwt").(*jwt.Token)
@@ -26,7 +26,7 @@ func Adminrulehome(c *fiber.Ctx) error {
 	var obj entities.Model_adminruleall
 	var arraobj []entities.Model_adminruleall
 	render_page := time.Now()
-	resultredis, flag := helpers.GetRedis(Fieldadminrule_home_redis + "_" + strings.ToLower(client_company))
+	resultredis, flag := helpers.GetRedis(strings.ToLower(client_company) + ":" + Fieldadminrule_home_redis)
 	jsonredis := []byte(resultredis)
 	record_RD, _, _, _ := jsonparser.Get(jsonredis, "record")
 	jsonparser.ArrayEach(record_RD, func(value []byte, dataType jsonparser.ValueType, offset int, err error) {
@@ -50,11 +50,11 @@ func Adminrulehome(c *fiber.Ctx) error {
 				"record":  nil,
 			})
 		}
-		helpers.SetRedis(Fieldadminrule_home_redis+"_"+strings.ToLower(client_company), result, 60*time.Minute)
-		fmt.Println("ADMIN RULE DATABASE")
+		helpers.SetRedis(strings.ToLower(client_company)+":"+Fieldadminrule_home_redis, result, 60*time.Minute)
+		fmt.Println("AGEN ADMIN RULE DATABASE")
 		return c.JSON(result)
 	} else {
-		fmt.Println("ADMIN RULE CACHE")
+		fmt.Println("AGEN ADMIN RULE CACHE")
 		return c.JSON(fiber.Map{
 			"status":  fiber.StatusOK,
 			"message": "Success",
@@ -114,7 +114,7 @@ func AdminruleSave(c *fiber.Ctx) error {
 }
 
 func _deleteredis_adminrule(idcompany string) {
-	val_master := helpers.DeleteRedis(Fieldadminrule_home_redis + "_" + strings.ToLower(idcompany))
+	val_master := helpers.DeleteRedis(strings.ToLower(idcompany) + ":" + Fieldadminrule_home_redis)
 	fmt.Printf("Redis Delete AGEN ADMIN RULE : %d", val_master)
 
 }

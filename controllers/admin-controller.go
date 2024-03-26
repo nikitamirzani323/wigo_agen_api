@@ -1,6 +1,7 @@
 package controllers
 
 import (
+	"fmt"
 	"log"
 	"strings"
 	"time"
@@ -14,7 +15,7 @@ import (
 	"github.com/golang-jwt/jwt/v4"
 )
 
-const Fieldadmin_home_redis = "LISTADMIN_AGEN"
+const Fieldadmin_home_redis = "AGEN:LISTADMIN"
 
 func Adminhome(c *fiber.Ctx) error {
 	user := c.Locals("jwt").(*jwt.Token)
@@ -28,7 +29,7 @@ func Adminhome(c *fiber.Ctx) error {
 	var obj_listruleadmin entities.Model_adminrule
 	var arraobj_listruleadmin []entities.Model_adminrule
 	render_page := time.Now()
-	resultredis, flag := helpers.GetRedis(Fieldadmin_home_redis + "_" + strings.ToLower(client_company))
+	resultredis, flag := helpers.GetRedis(strings.ToLower(client_company) + ":" + Fieldadmin_home_redis)
 	jsonredis := []byte(resultredis)
 	record_RD, _, _, _ := jsonparser.Get(jsonredis, "record")
 	listruleadmin_RD, _, _, _ := jsonparser.Get(jsonredis, "listruleadmin")
@@ -74,11 +75,11 @@ func Adminhome(c *fiber.Ctx) error {
 				"record":  nil,
 			})
 		}
-		helpers.SetRedis(Fieldadmin_home_redis+"_"+strings.ToLower(client_company), result, 60*time.Minute)
-		log.Println("ADMIN DATABASE")
+		helpers.SetRedis(strings.ToLower(client_company)+":"+Fieldadmin_home_redis, result, 60*time.Minute)
+		fmt.Println("AGEN ADMIN DATABASE")
 		return c.JSON(result)
 	} else {
-		log.Println("ADMIN CACHE")
+		fmt.Println("AGEN ADMIN CACHE")
 		return c.JSON(fiber.Map{
 			"status":        fiber.StatusOK,
 			"message":       "Success",
@@ -141,7 +142,7 @@ func AdminSave(c *fiber.Ctx) error {
 	return c.JSON(result)
 }
 func _deleteredis_admin(idcompany string) {
-	val_master := helpers.DeleteRedis(Fieldadmin_home_redis + "_" + strings.ToLower(idcompany))
+	val_master := helpers.DeleteRedis(strings.ToLower(idcompany) + "+" + Fieldadmin_home_redis)
 	log.Printf("Redis Delete AGEN ADMIN : %d", val_master)
 
 }
