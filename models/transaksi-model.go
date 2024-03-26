@@ -492,7 +492,7 @@ func Save_updateresult2D30S(admin, idrecord, idcompany, result string) (helpers.
 			idcurr := _GetCompanyInfo(idcompany)
 			invoice := _Generate_incoive(strings.ToLower(idcompany), idcurr)
 
-			fieldconfig_redis := "TIMER_" + strings.ToLower(idcompany)
+			fieldconfig_redis := strings.ToLower(idcompany) + ":12D30S:TIMER"
 			type Configure struct {
 				Time    int    `json:"time"`
 				Invoice string `json:"invoice"`
