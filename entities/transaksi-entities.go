@@ -63,6 +63,8 @@ type Model_agenconf struct {
 	Agenconf_2digit_30_winangka    float64 `json:"agenconf_2digit_30_winangka"`
 	Agenconf_2digit_30_winredblack float64 `json:"agenconf_2digit_30_winredblack"`
 	Agenconf_2digit_30_winline     float64 `json:"agenconf_2digit_30_winline"`
+	Agenconf_2digit_30_winzona     float64 `json:"agenconf_2digit_30_winzona"`
+	Agenconf_2digit_30_winjackpot  float64 `json:"agenconf_2digit_30_winjackpot"`
 	Agenconf_2digit_30_operator    string  `json:"agenconf_2digit_30_operator"`
 }
 type Controller_transaksi2D30Ssave struct {

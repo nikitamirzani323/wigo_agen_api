@@ -465,12 +465,16 @@ func AgenConf(c *fiber.Ctx) error {
 		agenconf_2digit_30_winangka, _ := jsonparser.GetFloat(value, "agenconf_2digit_30_winangka")
 		agenconf_2digit_30_winredblack, _ := jsonparser.GetFloat(value, "agenconf_2digit_30_winredblack")
 		agenconf_2digit_30_winline, _ := jsonparser.GetFloat(value, "agenconf_2digit_30_winline")
+		agenconf_2digit_30_winzona, _ := jsonparser.GetFloat(value, "agenconf_2digit_30_winzona")
+		agenconf_2digit_30_winjackpot, _ := jsonparser.GetFloat(value, "agenconf_2digit_30_winjackpot")
 		agenconf_2digit_30_operator, _ := jsonparser.GetString(value, "agenconf_2digit_30_operator")
 
 		obj.Agenconf_2digit_30_time = int(agenconf_2digit_30_time)
 		obj.Agenconf_2digit_30_winangka = float64(agenconf_2digit_30_winangka)
 		obj.Agenconf_2digit_30_winredblack = float64(agenconf_2digit_30_winredblack)
 		obj.Agenconf_2digit_30_winline = float64(agenconf_2digit_30_winline)
+		obj.Agenconf_2digit_30_winzona = float64(agenconf_2digit_30_winzona)
+		obj.Agenconf_2digit_30_winjackpot = float64(agenconf_2digit_30_winjackpot)
 		obj.Agenconf_2digit_30_operator = agenconf_2digit_30_operator
 		arraobj = append(arraobj, obj)
 	})

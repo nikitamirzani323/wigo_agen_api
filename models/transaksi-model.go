@@ -421,7 +421,7 @@ func Fetch_Agenconf(idcompany string) (helpers.Response, error) {
 	sql_select := ""
 	sql_select += "SELECT "
 	sql_select += "conf_2digit_30_time, "
-	sql_select += "conf_2digit_30_win,conf_2digit_30_win_redblack,conf_2digit_30_win_line,   "
+	sql_select += "conf_2digit_30_win,conf_2digit_30_win_redblack,conf_2digit_30_win_line, conf_2digit_30_win_zona, conf_2digit_30_win_jackpot,  "
 	sql_select += "conf_2digit_30_operator  "
 	sql_select += "FROM " + configs.DB_tbl_mst_company_config + " "
 	sql_select += "WHERE idcompany ='" + idcompany + "' "
@@ -430,13 +430,13 @@ func Fetch_Agenconf(idcompany string) (helpers.Response, error) {
 	helpers.ErrorCheck(err)
 	for row.Next() {
 		var (
-			conf_2digit_30_time_db                                                            int
-			conf_2digit_30_win_db, conf_2digit_30_win_redblack_db, conf_2digit_30_win_line_db float64
-			conf_2digit_30_operator_db                                                        string
+			conf_2digit_30_time_db                                                                                                                       int
+			conf_2digit_30_win_db, conf_2digit_30_win_redblack_db, conf_2digit_30_win_line_db, conf_2digit_30_win_zona_db, conf_2digit_30_win_jackpot_db float64
+			conf_2digit_30_operator_db                                                                                                                   string
 		)
 
 		err = row.Scan(&conf_2digit_30_time_db, &conf_2digit_30_win_db,
-			&conf_2digit_30_win_redblack_db, &conf_2digit_30_win_line_db,
+			&conf_2digit_30_win_redblack_db, &conf_2digit_30_win_line_db, &conf_2digit_30_win_zona_db, &conf_2digit_30_win_jackpot_db,
 			&conf_2digit_30_operator_db)
 
 		helpers.ErrorCheck(err)
@@ -445,6 +445,8 @@ func Fetch_Agenconf(idcompany string) (helpers.Response, error) {
 		obj.Agenconf_2digit_30_winangka = conf_2digit_30_win_db
 		obj.Agenconf_2digit_30_winredblack = conf_2digit_30_win_redblack_db
 		obj.Agenconf_2digit_30_winline = conf_2digit_30_win_line_db
+		obj.Agenconf_2digit_30_winzona = conf_2digit_30_win_zona_db
+		obj.Agenconf_2digit_30_winjackpot = conf_2digit_30_win_jackpot_db
 		obj.Agenconf_2digit_30_operator = conf_2digit_30_operator_db
 		arraobj = append(arraobj, obj)
 		msg = "Success"
@@ -739,27 +741,30 @@ func _rumuswigo2D30S(tipebet, nomorclient, nomorkeluaran string) string {
 func _nomorresult(nomoresult string) (string, string, string, string) {
 	type nomor_result_data struct {
 		nomor_id         string
+		nomor_value      string
 		nomor_flag       bool
 		nomor_css        string
 		nomor_gangen     string
 		nomor_besarkecil string
 		nomor_line       string
 		nomor_redblack   string
+		nomor_zona       string
 	}
 
 	var cards = []nomor_result_data{
-		{nomor_id: "01", nomor_flag: false, nomor_css: "btn", nomor_gangen: "GANJIL", nomor_besarkecil: "KECIL", nomor_line: "LINE1", nomor_redblack: "BLACK"},
-		{nomor_id: "02", nomor_flag: false, nomor_css: "btn btn-error", nomor_gangen: "GENAP", nomor_besarkecil: "KECIL", nomor_line: "LINE1", nomor_redblack: "RED"},
-		{nomor_id: "03", nomor_flag: false, nomor_css: "btn", nomor_gangen: "GANJIL", nomor_besarkecil: "KECIL", nomor_line: "LINE2", nomor_redblack: "BLACK"},
-		{nomor_id: "04", nomor_flag: false, nomor_css: "btn btn-error", nomor_gangen: "GENAP", nomor_besarkecil: "KECIL", nomor_line: "LINE2", nomor_redblack: "RED"},
-		{nomor_id: "05", nomor_flag: false, nomor_css: "btn", nomor_gangen: "GANJIL", nomor_besarkecil: "KECIL", nomor_line: "LINE3", nomor_redblack: "BLACK"},
-		{nomor_id: "06", nomor_flag: false, nomor_css: "btn btn-error", nomor_gangen: "GENAP", nomor_besarkecil: "KECIL", nomor_line: "LINE3", nomor_redblack: "RED"},
-		{nomor_id: "07", nomor_flag: false, nomor_css: "btn", nomor_gangen: "GANJIL", nomor_besarkecil: "BESAR", nomor_line: "LINE1", nomor_redblack: "BLACK"},
-		{nomor_id: "08", nomor_flag: false, nomor_css: "btn btn-error", nomor_gangen: "GENAP", nomor_besarkecil: "BESAR", nomor_line: "LINE1", nomor_redblack: "RED"},
-		{nomor_id: "09", nomor_flag: false, nomor_css: "btn", nomor_gangen: "GANJIL", nomor_besarkecil: "BESAR", nomor_line: "LINE2", nomor_redblack: "BLACK"},
-		{nomor_id: "10", nomor_flag: false, nomor_css: "btn btn-error", nomor_gangen: "GENAP", nomor_besarkecil: "BESAR", nomor_line: "LINE2", nomor_redblack: "RED"},
-		{nomor_id: "11", nomor_flag: false, nomor_css: "btn", nomor_gangen: "GANJIL", nomor_besarkecil: "BESAR", nomor_line: "LINE3", nomor_redblack: "BLACK"},
-		{nomor_id: "12", nomor_flag: false, nomor_css: "btn btn-error", nomor_gangen: "GENAP", nomor_besarkecil: "BESAR", nomor_line: "LINE3", nomor_redblack: "RED"}}
+		{nomor_id: "01", nomor_value: "01", nomor_zona: "ZONA_A", nomor_flag: false, nomor_css: "btn btn-error", nomor_gangen: "GANJIL", nomor_besarkecil: "KECIL", nomor_line: "LINE1", nomor_redblack: "RED"},
+		{nomor_id: "04", nomor_value: "04", nomor_zona: "ZONA_A", nomor_flag: false, nomor_css: "btn", nomor_gangen: "GENAP", nomor_besarkecil: "KECIL", nomor_line: "LINE2", nomor_redblack: "BLACK"},
+		{nomor_id: "07", nomor_value: "07", nomor_zona: "ZONA_A", nomor_flag: false, nomor_css: "btn btn-error", nomor_gangen: "GANJIL", nomor_besarkecil: "BESAR", nomor_line: "LINE3", nomor_redblack: "RED"},
+		{nomor_id: "10", nomor_value: "10", nomor_zona: "ZONA_A", nomor_flag: false, nomor_css: "btn", nomor_gangen: "GENAP", nomor_besarkecil: "BESAR", nomor_line: "LINE4", nomor_redblack: "BLACK"},
+		{nomor_id: "02", nomor_value: "02", nomor_zona: "ZONA_B", nomor_flag: false, nomor_css: "btn btn-error", nomor_gangen: "GENAP", nomor_besarkecil: "KECIL", nomor_line: "LINE1", nomor_redblack: "RED"},
+		{nomor_id: "05", nomor_value: "05", nomor_zona: "ZONA_B", nomor_flag: false, nomor_css: "btn", nomor_gangen: "GANJIL", nomor_besarkecil: "KECIL", nomor_line: "LINE2", nomor_redblack: "BLACK"},
+		{nomor_id: "08", nomor_value: "08", nomor_zona: "ZONA_B", nomor_flag: false, nomor_css: "btn btn-error", nomor_gangen: "GENAP", nomor_besarkecil: "BESAR", nomor_line: "LINE3", nomor_redblack: "RED"},
+		{nomor_id: "11", nomor_value: "11", nomor_zona: "ZONA_B", nomor_flag: false, nomor_css: "btn", nomor_gangen: "GANJIL", nomor_besarkecil: "BESAR", nomor_line: "LINE4", nomor_redblack: "BLACK"},
+		{nomor_id: "03", nomor_value: "03", nomor_zona: "ZONA_C", nomor_flag: false, nomor_css: "btn btn-error", nomor_gangen: "GANJIL", nomor_besarkecil: "KECIL", nomor_line: "LINE2", nomor_redblack: "RED"},
+		{nomor_id: "06", nomor_value: "06", nomor_zona: "ZONA_C", nomor_flag: false, nomor_css: "btn", nomor_gangen: "GENAP", nomor_besarkecil: "KECIL", nomor_line: "LINE2", nomor_redblack: "BLACK"},
+		{nomor_id: "09", nomor_value: "09", nomor_zona: "ZONA_C", nomor_flag: false, nomor_css: "btn btn-error", nomor_gangen: "GANJIL", nomor_besarkecil: "BESAR", nomor_line: "LINE3", nomor_redblack: "RED"},
+		{nomor_id: "12", nomor_value: "12", nomor_zona: "ZONA_C", nomor_flag: false, nomor_css: "btn", nomor_gangen: "GENAP", nomor_besarkecil: "BESAR", nomor_line: "LINE4", nomor_redblack: "BLACK"},
+		{nomor_id: "JACKPOT", nomor_value: "JACKPOT", nomor_flag: false, nomor_css: "btn", nomor_gangen: "GANJIL", nomor_besarkecil: "BESAR", nomor_line: "LINE3", nomor_redblack: "RED"}}
 
 	result_redblack := ""
 	result_gangen := ""
