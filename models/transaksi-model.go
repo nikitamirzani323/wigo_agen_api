@@ -4,7 +4,6 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
-	"log"
 	"math"
 	"strconv"
 	"strings"
@@ -134,7 +133,6 @@ func Fetch_transaksi2D30SHome(idcompany, idinvoice, search string, page int) (he
 	tglstart_redis := tglnow.Format("YYYYMM") + "01000000"
 	tglend_redis := tglnow.Format("YYYYMM") + dayendmonth + "235959"
 	keyinvoicemonth_redis := strings.ToLower(idcompany) + ":12D30S:invoicemonth_" + tglstart_redis + tglend_redis
-	log.Println(keyinvoicemonth_redis)
 	invoicemonth_redis, flag_invoicemonth := helpers.GetRedis(keyinvoicemonth_redis)
 
 	total_bet := 0
