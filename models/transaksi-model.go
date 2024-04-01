@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"log"
 	"math"
 	"strconv"
 	"strings"
@@ -13,6 +14,7 @@ import (
 	"bitbucket.org/isbtotogroup/wigo_agen_api/db"
 	"bitbucket.org/isbtotogroup/wigo_agen_api/entities"
 	"bitbucket.org/isbtotogroup/wigo_agen_api/helpers"
+	"github.com/buger/jsonparser"
 	"github.com/gofiber/fiber/v2"
 	"github.com/nleeper/goment"
 )
@@ -127,12 +129,30 @@ func Fetch_transaksi2D30SHome(idcompany, idinvoice, search string, page int) (he
 	}
 	defer row.Close()
 
+	//FORMAT : nuke:12D30S:invoicemonth_2024040100000020240430235959
+	dayendmonth := helpers.GetEndRangeDateTwo(tglnow.Format("MM"))
+	tglstart_redis := tglnow.Format("YYYYMM") + "01000000"
+	tglend_redis := tglnow.Format("YYYYMM") + dayendmonth + "235959"
+	keyinvoicemonth_redis := strings.ToLower(idcompany) + ":12D30S:invoicemonth_" + tglstart_redis + tglend_redis
+	log.Println(keyinvoicemonth_redis)
+	invoicemonth_redis, flag_invoicemonth := helpers.GetRedis(keyinvoicemonth_redis)
+
 	total_bet := 0
 	total_win := 0
 	var winlose_agen float64 = 0
 	var winlose_member float64 = 0
 	if idinvoice == "" {
-		total_bet, total_win = _GetTotalBetWinByDate_Transaksi(tbl_trx_transaksi, startdate, enddate)
+		if !flag_invoicemonth {
+			fmt.Println("INVOICE MONTHLY DATABASE")
+			total_bet, total_win = _GetTotalBetWinByDate_Transaksi(tbl_trx_transaksi, startdate, enddate)
+		} else {
+			fmt.Println("INVOICE MONTHLY CACHE")
+			jsonredis := []byte(invoicemonth_redis)
+			totalbet_RD, _ := jsonparser.GetInt(jsonredis, "totalbet")
+			totalwin_RD, _ := jsonparser.GetInt(jsonredis, "totalwin")
+			total_bet = int(totalbet_RD)
+			total_win = int(totalwin_RD)
+		}
 
 		winlose_agen = float64(total_bet - total_win)
 		if winlose_agen < 0 {

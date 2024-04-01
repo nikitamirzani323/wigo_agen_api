@@ -48,3 +48,33 @@ func GetEndRangeDate(month string) string {
 	}
 	return end
 }
+func GetEndRangeDateTwo(month string) string {
+	end := ""
+	switch month {
+	case "01":
+		end = "31"
+	case "02":
+		end = "28"
+	case "03":
+		end = "31"
+	case "04":
+		end = "30"
+	case "05":
+		end = "31"
+	case "06":
+		end = "30"
+	case "07":
+		end = "31"
+	case "08":
+		end = "31"
+	case "09":
+		end = "30"
+	case "10":
+		end = "31"
+	case "11":
+		end = "30"
+	case "12":
+		end = "31"
+	}
+	return end
+}
