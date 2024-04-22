@@ -30,7 +30,7 @@ func Fetch_transaksi2D30SHome(idcompany, idinvoice, search string, page int) (he
 	month := tglnow.Format("MMM")
 	day := helpers.GetEndRangeDate(strings.ToUpper(month))
 	startdate := tglnow.Format("YYYY-MM") + "-01 00:00:00"
-	enddate := tglnow.Format("YYYY-MM-") + day + " 23:59:00"
+	enddate := tglnow.Format("YYYY-MM-") + day + " 23:59:59"
 	periode := strings.ToUpper(month) + "-" + tglnow.Format("YYYY")
 
 	_, tbl_trx_transaksi, _ := Get_mappingdatabase(idcompany)

@@ -26,7 +26,6 @@ func Login_Model(username, password, ipaddress string) (bool, string, string, er
 			AND statuscompadmin = 'Y' 
 		`
 
-	fmt.Println(sql_select, username)
 	row := con.QueryRowContext(ctx, sql_select, username)
 	switch e := row.Scan(&passwordDB, &idcompanyDB, &idadminDB); e {
 	case sql.ErrNoRows:
@@ -57,7 +56,6 @@ func Login_Model(username, password, ipaddress string) (bool, string, string, er
 
 		if flag_update {
 			flag = true
-			fmt.Println(msg_update)
 		} else {
 			fmt.Println(msg_update)
 		}
