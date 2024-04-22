@@ -14,6 +14,15 @@ type Model_transaksi2D30S struct {
 	Transaksi2D30S_create      string `json:"transaksi2D30s_create"`
 	Transaksi2D30S_update      string `json:"transaksi2D30s_update"`
 }
+type Model_transaksi2D30S_daily struct {
+	Transaksi2D30Ssummarydaily_id       string `json:"transaksi2D30ssummarydaily_id"`
+	Transaksi2D30Ssummarydaily_periode  string `json:"transaksi2D30ssummarydaily_periode"`
+	Transaksi2D30Ssummarydaily_totalbet int    `json:"transaksi2D30ssummarydaily_totalbet"`
+	Transaksi2D30Ssummarydaily_totalwin int    `json:"transaksi2D30ssummarydaily_totalwin"`
+	Transaksi2D30Ssummarydaily_winlose  int    `json:"transaksi2D30ssummarydaily_winlose"`
+	Transaksi2D30Ssummarydaily_create   string `json:"transaksi2D30ssummarydaily_create"`
+	Transaksi2D30Ssummarydaily_update   string `json:"transaksi2D30ssummarydaily_update"`
+}
 type Model_transaksi2D30SInfoInvoice struct {
 	Transaksi2D30Sinfo_id          string `json:"transaksi2D30sinfo_id"`
 	Transaksi2D30Sinfo_result      string `json:"transaksi2D30sinfo_result"`
@@ -80,6 +89,10 @@ type Controller_transaksi2D30S struct {
 	Transaksi2D30S_search  string `json:"transaksi2D30s_search"`
 	Transaksi2D30S_page    int    `json:"transaksi2D30s_page"`
 	Transaksi2D30S_invoice string `json:"transaksi2D30s_invoice"`
+}
+type Controller_transaksi2D30SSummaryDaily struct {
+	Transaksi2D30Ssummarydaily_search string `json:"transaksi2D30ssummarydaily_search"`
+	Transaksi2D30Ssummarydaily_page   int    `json:"transaksi2D30ssummarydaily_page"`
 }
 type Controller_transaksi2D30Sinfo struct {
 	Transaksi2D30S_invoice string `json:"transaksi2D30s_invoice"`

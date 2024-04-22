@@ -33,7 +33,7 @@ func Fetch_transaksi2D30SHome(idcompany, idinvoice, search string, page int) (he
 	enddate := tglnow.Format("YYYY-MM-") + day + " 23:59:59"
 	periode := strings.ToUpper(month) + "-" + tglnow.Format("YYYY")
 
-	_, tbl_trx_transaksi, _ := Get_mappingdatabase(idcompany)
+	_, tbl_trx_transaksi, _, _ := Get_mappingdatabase(idcompany)
 
 	perpage := configs.PAGING_PAGE
 	totalrecord := 0
@@ -174,6 +174,126 @@ func Fetch_transaksi2D30SHome(idcompany, idinvoice, search string, page int) (he
 
 	return res, nil
 }
+func Fetch_transaksi2D30SSummaryDaily(idcompany, search string, page int) (helpers.ResponseTransaksi2D30S, error) {
+	var obj entities.Model_transaksi2D30S_daily
+	var arraobj []entities.Model_transaksi2D30S_daily
+	var res helpers.ResponseTransaksi2D30S
+	msg := "Data Not Found"
+	con := db.CreateCon()
+	ctx := context.Background()
+	start := time.Now()
+	tglnow, _ := goment.New()
+	month := tglnow.Format("MMM")
+	day := helpers.GetEndRangeDate(strings.ToUpper(month))
+	startdate := tglnow.Format("YYYY-MM") + "-01 00:00:00"
+	enddate := tglnow.Format("YYYY-MM-") + day + " 23:59:59"
+	periode := strings.ToUpper(month) + "-" + tglnow.Format("YYYY")
+
+	_, _, _, tbl_trx_transaksi_summarydaily := Get_mappingdatabase(idcompany)
+
+	perpage := configs.PAGING_PAGE
+	totalrecord := 0
+	offset := page
+	sql_selectcount := ""
+	sql_selectcount += ""
+	sql_selectcount += "SELECT "
+	sql_selectcount += "COUNT(idtransaksidaily) as totalpurchase  "
+	sql_selectcount += "FROM " + tbl_trx_transaksi_summarydaily + "  "
+	if search != "" {
+		sql_selectcount += "WHERE idtransaksidaily LIKE '%" + strings.ToLower(search) + "%' "
+	} else {
+		sql_selectcount += "WHERE createdate_transaksidaily >='" + startdate + "' "
+		sql_selectcount += "AND createdate_transaksidaily <='" + enddate + "' "
+	}
+
+	row_selectcount := con.QueryRowContext(ctx, sql_selectcount)
+	switch e_selectcount := row_selectcount.Scan(&totalrecord); e_selectcount {
+	case sql.ErrNoRows:
+	case nil:
+	default:
+		helpers.ErrorCheck(e_selectcount)
+	}
+
+	sql_select := ""
+	sql_select += "SELECT "
+	sql_select += "idtransaksidaily,periodetransaksidaily,  "
+	sql_select += "total_betdaily,total_windaily,  "
+	sql_select += "create_transaksidaily, to_char(COALESCE(createdate_transaksidaily,now()), 'YYYY-MM-DD HH24:MI:SS'), "
+	sql_select += "update_transaksidaily, to_char(COALESCE(updatedate_transaksidaily,now()), 'YYYY-MM-DD HH24:MI:SS')  "
+	sql_select += "FROM " + tbl_trx_transaksi_summarydaily + "   "
+	if search != "" {
+		sql_select += "WHERE idtransaksidaily LIKE '%" + strings.ToLower(search) + "%' "
+	} else {
+		sql_select += "WHERE createdate_transaksidaily >='" + startdate + "' "
+		sql_select += "AND createdate_transaksidaily <='" + enddate + "' "
+	}
+	sql_select += "ORDER BY createdate_transaksidaily DESC   OFFSET " + strconv.Itoa(offset) + " LIMIT " + strconv.Itoa(perpage)
+
+	row, err := con.QueryContext(ctx, sql_select)
+	helpers.ErrorCheck(err)
+	total_bet := 0
+	total_win := 0
+	for row.Next() {
+		var (
+			idtransaksidaily_db, periodetransaksidaily_db                                                                  string
+			total_betdaily_db, total_windaily_db                                                                           int
+			create_transaksidaily_db, createdate_transaksidaily_db, update_transaksidaily_db, updatedate_transaksidaily_db string
+		)
+
+		err = row.Scan(&idtransaksidaily_db, &periodetransaksidaily_db,
+			&total_betdaily_db, &total_windaily_db,
+			&create_transaksidaily_db, &createdate_transaksidaily_db, &update_transaksidaily_db, &updatedate_transaksidaily_db)
+
+		helpers.ErrorCheck(err)
+		create := ""
+		update := ""
+
+		if create_transaksidaily_db != "" {
+			create = create_transaksidaily_db + ", " + createdate_transaksidaily_db
+		}
+		if update_transaksidaily_db != "" {
+			update = update_transaksidaily_db + ", " + updatedate_transaksidaily_db
+		}
+
+		obj.Transaksi2D30Ssummarydaily_id = idtransaksidaily_db
+		obj.Transaksi2D30Ssummarydaily_periode = periodetransaksidaily_db
+		obj.Transaksi2D30Ssummarydaily_totalbet = total_betdaily_db
+		obj.Transaksi2D30Ssummarydaily_totalwin = total_windaily_db
+		obj.Transaksi2D30Ssummarydaily_winlose = total_betdaily_db - total_windaily_db
+		obj.Transaksi2D30Ssummarydaily_create = create
+		obj.Transaksi2D30Ssummarydaily_update = update
+
+		arraobj = append(arraobj, obj)
+
+		total_bet = total_bet + total_betdaily_db
+		total_win = total_win + total_windaily_db
+		msg = "Success"
+	}
+	defer row.Close()
+
+	var winlose_agen float64 = 0
+	var winlose_member float64 = 0
+	winlose_agen = float64(total_bet - total_win)
+	if winlose_agen < 0 {
+		winlose_member = math.Abs(winlose_agen)
+	} else {
+		winlose_member = -winlose_agen
+	}
+
+	res.Status = fiber.StatusOK
+	res.Message = msg
+	res.Periode = periode
+	res.Record = arraobj
+	res.Perpage = perpage
+	res.Totalrecord = totalrecord
+	res.TotalBet = total_bet
+	res.TotalWin = total_win
+	res.Winlose_agen = int(winlose_agen)
+	res.Winlose_member = int(winlose_member)
+	res.Time = time.Since(start).String()
+
+	return res, nil
+}
 func Fetch_transaksi2D30SInfo(idcompany, idinvoice string) (helpers.ResponseTransaksi2D30SInfo, error) {
 	var obj entities.Model_transaksi2D30SInfoInvoice
 	var arraobj []entities.Model_transaksi2D30SInfoInvoice
@@ -183,7 +303,7 @@ func Fetch_transaksi2D30SInfo(idcompany, idinvoice string) (helpers.ResponseTran
 	ctx := context.Background()
 	start := time.Now()
 
-	_, tbl_trx_transaksi, tbl_trx_transaksidetail := Get_mappingdatabase(idcompany)
+	_, tbl_trx_transaksi, tbl_trx_transaksidetail, _ := Get_mappingdatabase(idcompany)
 
 	sql_select := ""
 	sql_select += "SELECT "
@@ -267,7 +387,7 @@ func Fetch_transaksi2D30SDetail(idcompany, idtransaksi, status string) (helpers.
 	ctx := context.Background()
 	start := time.Now()
 
-	_, _, tbl_trx_transaksidetail := Get_mappingdatabase(idcompany)
+	_, _, tbl_trx_transaksidetail, _ := Get_mappingdatabase(idcompany)
 
 	sql_select := ""
 	sql_select += "SELECT "
@@ -352,7 +472,7 @@ func Fetch_transaksi2D30SPrediksi(idcompany, idinvoice, result string) (helpers.
 	ctx := context.Background()
 	start := time.Now()
 
-	_, _, tbl_trx_transaksidetail := Get_mappingdatabase(idcompany)
+	_, _, tbl_trx_transaksidetail, _ := Get_mappingdatabase(idcompany)
 
 	total_bet := 0
 	total_win := 0
@@ -484,7 +604,7 @@ func Save_updateresult2D30S(admin, idrecord, idcompany, result string) (helpers.
 	tglnow, _ := goment.New()
 	render_page := time.Now()
 
-	_, tbl_trx_transaksi, _ := Get_mappingdatabase(idcompany)
+	_, tbl_trx_transaksi, _, _ := Get_mappingdatabase(idcompany)
 
 	result_db, status_db, _ := _GetInvoiceInfo(idrecord, idcompany)
 	if result_db == "" && status_db == "OPEN" {
@@ -574,7 +694,7 @@ func _Generate_incoive(idcompany, idcurr string) string {
 	tglnow, _ := goment.New()
 	id_invoice := _GetInvoice(idcompany)
 	if id_invoice == "" {
-		_, tbl_trx_transaksi, _ := Get_mappingdatabase(idcompany)
+		_, tbl_trx_transaksi, _, _ := Get_mappingdatabase(idcompany)
 
 		sql_insert := `
 			insert into
@@ -610,7 +730,7 @@ func _GetInvoice(idcompany string) string {
 	con := db.CreateCon()
 	ctx := context.Background()
 
-	_, tbl_trx_transaksi, _ := Get_mappingdatabase(idcompany)
+	_, tbl_trx_transaksi, _, _ := Get_mappingdatabase(idcompany)
 
 	idtransaksi := ""
 
@@ -636,7 +756,7 @@ func _GetInvoiceInfo(invoice, idcompany string) (string, string, int) {
 	con := db.CreateCon()
 	ctx := context.Background()
 
-	_, tbl_trx_transaksi, _ := Get_mappingdatabase(idcompany)
+	_, tbl_trx_transaksi, _, _ := Get_mappingdatabase(idcompany)
 
 	result := ""
 	status := ""

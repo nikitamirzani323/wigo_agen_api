@@ -16,6 +16,7 @@ import (
 )
 
 const Fieldtransaksi2d30s_home_redis = "AGEN:12D30S:LISTINVOICE"
+const Fieldtransaksi2d30s_summarydaily_redis = "AGEN:12D30S:LISTINVOICE:SUMMARYDAILY"
 const Fieldconf_home_redis = "AGEN:12D30S:CONF"
 
 func Transaksi2D30Shome(c *fiber.Ctx) error {
@@ -124,6 +125,113 @@ func Transaksi2D30Shome(c *fiber.Ctx) error {
 		return c.JSON(result)
 	} else {
 		fmt.Println("AGEN TRANSAKSI 12D30S CACHE")
+		return c.JSON(fiber.Map{
+			"status":         fiber.StatusOK,
+			"message":        "Success",
+			"record":         arraobj,
+			"periode":        periode_RD,
+			"perpage":        perpage_RD,
+			"totalrecord":    totalrecord_RD,
+			"totalbet":       totalbet_RD,
+			"totalwin":       totalwin_RD,
+			"winlose_agen":   winlose_agen_RD,
+			"winlose_member": winlose_member_RD,
+			"time":           time.Since(render_page).String(),
+		})
+	}
+}
+func Transaksi2D30Ssummarydaily(c *fiber.Ctx) error {
+	var errors []*helpers.ErrorResponse
+	client := new(entities.Controller_transaksi2D30SSummaryDaily)
+	validate := validator.New()
+	if err := c.BodyParser(client); err != nil {
+		c.Status(fiber.StatusBadRequest)
+		return c.JSON(fiber.Map{
+			"status":  fiber.StatusBadRequest,
+			"message": err.Error(),
+			"record":  nil,
+		})
+	}
+
+	err := validate.Struct(client)
+	if err != nil {
+		for _, err := range err.(validator.ValidationErrors) {
+			var element helpers.ErrorResponse
+			element.Field = err.StructField()
+			element.Tag = err.Tag()
+			errors = append(errors, &element)
+		}
+		c.Status(fiber.StatusBadRequest)
+		return c.JSON(fiber.Map{
+			"status":  fiber.StatusBadRequest,
+			"message": "validation",
+			"record":  errors,
+		})
+	}
+
+	user := c.Locals("jwt").(*jwt.Token)
+	claims := user.Claims.(jwt.MapClaims)
+	name := claims["name"].(string)
+	temp_decp := helpers.Decryption(name)
+	_, client_company, _ := helpers.Parsing_Decry(temp_decp, "==")
+
+	fieldredis := ""
+	if client.Transaksi2D30Ssummarydaily_search != "" {
+		fieldredis = strings.ToLower(client_company) + ":" + Fieldtransaksi2d30s_summarydaily_redis + "_" + strconv.Itoa(client.Transaksi2D30Ssummarydaily_page) + "_" + client.Transaksi2D30Ssummarydaily_search
+		val_pattern := helpers.DeleteRedis(fieldredis)
+		fmt.Printf("Redis Delete SUMMARY DAILY : %d", val_pattern)
+	} else {
+		fieldredis = strings.ToLower(client_company) + ":" + Fieldtransaksi2d30s_summarydaily_redis + "_" + strconv.Itoa(client.Transaksi2D30Ssummarydaily_page) + "_" + client.Transaksi2D30Ssummarydaily_search
+	}
+
+	var obj entities.Model_transaksi2D30S_daily
+	var arraobj []entities.Model_transaksi2D30S_daily
+	render_page := time.Now()
+	resultredis, flag := helpers.GetRedis(fieldredis)
+	jsonredis := []byte(resultredis)
+	perpage_RD, _ := jsonparser.GetInt(jsonredis, "perpage")
+	totalbet_RD, _ := jsonparser.GetInt(jsonredis, "totalbet")
+	totalwin_RD, _ := jsonparser.GetInt(jsonredis, "totalwin")
+	winlose_agen_RD, _ := jsonparser.GetInt(jsonredis, "winlose_agen")
+	winlose_member_RD, _ := jsonparser.GetInt(jsonredis, "winlose_member")
+	totalrecord_RD, _ := jsonparser.GetInt(jsonredis, "totalrecord")
+	record_RD, _, _, _ := jsonparser.Get(jsonredis, "record")
+	periode_RD, _ := jsonparser.GetString(jsonredis, "periode")
+	jsonparser.ArrayEach(record_RD, func(value []byte, dataType jsonparser.ValueType, offset int, err error) {
+		transaksi2D30ssummarydaily_id, _ := jsonparser.GetString(value, "transaksi2D30ssummarydaily_id")
+		transaksi2D30ssummarydaily_periode, _ := jsonparser.GetString(value, "transaksi2D30ssummarydaily_periode")
+		transaksi2D30ssummarydaily_totalbet, _ := jsonparser.GetInt(value, "transaksi2D30ssummarydaily_totalbet")
+		transaksi2D30ssummarydaily_totalwin, _ := jsonparser.GetInt(value, "transaksi2D30ssummarydaily_totalwin")
+		transaksi2D30ssummarydaily_winlose, _ := jsonparser.GetInt(value, "transaksi2D30ssummarydaily_winlose")
+		transaksi2D30ssummarydaily_create, _ := jsonparser.GetString(value, "transaksi2D30ssummarydaily_create")
+		transaksi2D30ssummarydaily_update, _ := jsonparser.GetString(value, "transaksi2D30ssummarydaily_update")
+
+		obj.Transaksi2D30Ssummarydaily_id = transaksi2D30ssummarydaily_id
+		obj.Transaksi2D30Ssummarydaily_periode = transaksi2D30ssummarydaily_periode
+		obj.Transaksi2D30Ssummarydaily_totalbet = int(transaksi2D30ssummarydaily_totalbet)
+		obj.Transaksi2D30Ssummarydaily_totalwin = int(transaksi2D30ssummarydaily_totalwin)
+		obj.Transaksi2D30Ssummarydaily_winlose = int(transaksi2D30ssummarydaily_winlose)
+		obj.Transaksi2D30Ssummarydaily_create = transaksi2D30ssummarydaily_create
+		obj.Transaksi2D30Ssummarydaily_update = transaksi2D30ssummarydaily_update
+		arraobj = append(arraobj, obj)
+	})
+
+	if !flag {
+		//idcompany, search string, page int
+		result, err := models.Fetch_transaksi2D30SSummaryDaily(client_company, client.Transaksi2D30Ssummarydaily_search, client.Transaksi2D30Ssummarydaily_page)
+		if err != nil {
+			c.Status(fiber.StatusBadRequest)
+			return c.JSON(fiber.Map{
+				"status":  fiber.StatusBadRequest,
+				"message": err.Error(),
+				"record":  nil,
+			})
+		}
+		helpers.SetRedis(fieldredis, result, 60*time.Minute)
+		fmt.Println("AGEN TRANSAKSI SUMMARYDAILY 12D30S DATABASE")
+		return c.JSON(result)
+	} else {
+		fmt.Println("AGEN TRANSAKSI SUMMARYDAILY 12D30S CACHE")
 		return c.JSON(fiber.Map{
 			"status":         fiber.StatusOK,
 			"message":        "Success",
