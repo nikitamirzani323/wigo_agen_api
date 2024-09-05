@@ -37,7 +37,9 @@ func Login_Model(username, password, ipaddress string) (bool, string, string, er
 	}
 
 	hashpass := helpers.HashPasswordMD5(password)
-
+	fmt.Println(flag)
+	fmt.Println(hashpass)
+	fmt.Println(passwordDB)
 	if hashpass != passwordDB {
 		return false, "", "", nil
 	}
